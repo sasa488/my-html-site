@@ -1,1 +1,3 @@
-# my-html-site
+# GitHub Pages 静态版
+
+这个目录可直接作为 GitHub Pages 发布源。静态版保留浏览、搜索、测试推荐、知识卡片和术语解释；AI 问答会降级为本地检索提示。

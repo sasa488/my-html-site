@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>知投 - 金融经典知识库</title>
+    <meta name="description" content="投资经典书籍的结构化知识点、检索与 AI 问答。" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="产品概览">
+        <div>
+          <p class="eyebrow">Read to Invest</p>
+          <h1>知投</h1>
+          <p class="subtitle">投资经典书籍的结构化知识点、检索与 AI 问答。</p>
+        </div>
+        <div class="stats" aria-label="知识库统计">
+          <span><strong id="book-count">0</strong> 本经典</span>
+          <span><strong id="point-count">0</strong> 个知识点</span>
+          <span><strong id="theme-count">0</strong> 个主题</span>
+          <span><strong id="mastered-count">0/0</strong> 已掌握</span>
+        </div>
+      </section>
+
+      <section id="recommendation-panel" class="recommendation-panel hidden" aria-label="测试结果与推荐书单"></section>
+
+      <section class="control-strip" aria-label="搜索与主题筛选">
+        <label class="searchbox">
+          <span aria-hidden="true">⌕</span>
+          <input id="search-input" placeholder="搜索书名、作者、概念、标签..." aria-label="搜索知识库" />
+        </label>
+        <div id="theme-tabs" class="theme-tabs" role="tablist" aria-label="主题"></div>
+        <button id="beginner-toggle" class="beginner-toggle" type="button">小白模式：开</button>
+      </section>
+
+      <section class="workspace-grid">
+        <aside class="panel library-panel" aria-label="书籍知识库">
+          <div class="panel-title">
+            <span aria-hidden="true">▣</span>
+            <h2>书籍知识库</h2>
+          </div>
+          <div id="book-list" class="book-list"></div>
+        </aside>
+
+        <section class="panel main-panel" aria-label="知识点卡片">
+          <div id="book-hero" class="book-hero"></div>
+          <div class="point-layout">
+            <div id="point-list" class="point-list" aria-label="知识点列表"></div>
+            <article id="point-detail" class="point-detail"></article>
+          </div>
+        </section>
+
+        <aside class="panel ask-panel" aria-label="AI 智能问答">
+          <div class="panel-title">
+            <span aria-hidden="true">✦</span>
+            <h2>AI 智能问答</h2>
+          </div>
+          <textarea id="question-input" aria-label="输入问题">什么是安全边际？</textarea>
+          <button id="ask-button" class="ask-button" type="button">
+            <span aria-hidden="true">✧</span>
+            <span>基于知识库回答</span>
+          </button>
+          <div id="answer-box" class="answer-box hidden"></div>
+          <div id="citations" class="citations"></div>
+          <div class="notice">
+            <span aria-hidden="true">!</span>
+            <p>仅供学习参考，不构成投资建议。AI 回答只能解释知识库内容，不应作为买卖依据。</p>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="risk-footer">
+        <span aria-hidden="true">!</span>
+        <span>免责声明：本知识库不提供个股推荐、收益承诺、仓位建议或市场预测。</span>
+      </footer>
+    </main>
+
+    <section id="quiz-modal" class="quiz-modal hidden" aria-label="投资学习测试" aria-modal="true" role="dialog">
+      <div class="quiz-card">
+        <div class="quiz-head">
+          <p class="eyebrow">Start Here</p>
+          <h2>先做 5 道题，找到适合你的投资学习路线</h2>
+          <p>测试只用于推荐书籍和学习主题，不收集个人身份信息，也不构成投资建议。</p>
+        </div>
+        <form id="quiz-form" class="quiz-form"></form>
+      </div>
+    </section>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
