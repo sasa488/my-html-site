@@ -34,96 +34,104 @@ const els = {
 
 const quizQuestions = [
   {
-    id: "risk",
-    question: "你现在最想先解决的问题是什么？",
+    id: "hotNews",
+    question: "刷到一条消息：某只股票三天涨了很多，朋友圈都在聊。你的第一反应是？",
     options: [
-      { label: "先别犯大错，理解风险和估值", scores: { value: 3, index: 2, behavior: 1 } },
-      { label: "想找到长期增长的好公司", scores: { growth: 3, value: 1 } },
-      { label: "想用简单方法长期配置资产", scores: { index: 3, psychology: 1 } },
-      { label: "想理解市场波动和买卖节奏", scores: { technical: 2, macro: 2, behavior: 1 } }
+      { label: "先别急，我想知道它到底值不值这个价", scores: { value: 3, behavior: 1 } },
+      { label: "有点心动，但我更想知道这家公司是不是真的变强了", scores: { growth: 3, value: 1 } },
+      { label: "太热闹了，我还是按自己的长期计划来", scores: { index: 3, psychology: 1 } },
+      { label: "先看走势和成交量，别光听大家喊", scores: { technical: 2, quant: 1, macro: 1 } }
     ]
   },
   {
-    id: "effort",
-    question: "你愿意投入多少时间研究单家公司？",
+    id: "weekend",
+    question: "周末你决定学一点投资，更像会打开哪一种内容？",
     options: [
-      { label: "时间很少，更想要可执行的长期方案", scores: { index: 3, psychology: 2 } },
-      { label: "愿意读财报和商业模式，但先从基础开始", scores: { value: 3, growth: 1 } },
-      { label: "愿意深度调研行业、产品和管理层", scores: { growth: 3, value: 1 } },
-      { label: "更喜欢用数据、规则和模型做验证", scores: { quant: 3, technical: 1 } }
+      { label: "《普通人别踩坑清单》这种越实用越好", scores: { value: 2, behavior: 2, psychology: 1 } },
+      { label: "《我身边的品牌为什么赚钱》这种故事最好懂", scores: { growth: 3, value: 1 } },
+      { label: "《懒人也能坚持的长期配置》听起来很适合我", scores: { index: 3, psychology: 2 } },
+      { label: "《用数据测试一个想法》这种我会忍不住点开", scores: { quant: 3, technical: 1 } }
     ]
   },
   {
-    id: "horizon",
-    question: "你的学习视角更接近哪一种？",
+    id: "downMarket",
+    question: "如果市场突然大跌，你最可能做什么？",
     options: [
-      { label: "长期持有，重点看企业价值", scores: { value: 3, growth: 1 } },
-      { label: "长期配置，重点看分散和成本", scores: { index: 3, psychology: 1 } },
-      { label: "理解周期，重点看宏观环境和情绪", scores: { macro: 3, behavior: 1 } },
-      { label: "识别趋势，重点看价格行为和规则", scores: { technical: 3, quant: 1 } }
+      { label: "翻出自己的理由：当初为什么买，现在变了吗？", scores: { value: 3, behavior: 1 } },
+      { label: "先看看是不是整个环境变了，比如利率、政策、周期", scores: { macro: 3, index: 1 } },
+      { label: "按计划继续，不想每天被涨跌牵着走", scores: { index: 3, psychology: 2 } },
+      { label: "看有没有跌破自己的规则，破了就认错", scores: { technical: 2, quant: 2 } }
     ]
   },
   {
-    id: "weakness",
-    question: "你最担心自己在哪方面出问题？",
+    id: "friend",
+    question: "朋友问你“现在买什么能赚？”你心里的弹幕是？",
     options: [
-      { label: "追涨杀跌，被市场情绪带着走", scores: { behavior: 3, psychology: 2 } },
-      { label: "看不懂估值，分不清便宜和陷阱", scores: { value: 3, macro: 1 } },
-      { label: "选股太难，容易被热门故事吸引", scores: { index: 3, behavior: 1 } },
-      { label: "没有纪律，交易规则经常变形", scores: { technical: 2, quant: 2, psychology: 1 } }
+      { label: "先别问买什么，先问你能承受亏多少", scores: { psychology: 3, behavior: 2 } },
+      { label: "我更想问：这个东西凭什么值这个价？", scores: { value: 3 } },
+      { label: "我可能会说：别押一把，先做分散配置", scores: { index: 3, psychology: 1 } },
+      { label: "如果没有规则，买什么都容易变成乱猜", scores: { technical: 2, quant: 2, behavior: 1 } }
     ]
   },
   {
-    id: "style",
-    question: "你更喜欢哪种学习材料？",
+    id: "character",
+    question: "如果把你放进一个投资游戏，你更像哪个角色？",
     options: [
-      { label: "经典原则和大师原典", scores: { value: 3, behavior: 1 } },
-      { label: "案例、故事和容易坚持的习惯", scores: { psychology: 3, growth: 1 } },
-      { label: "体系化框架和宏观解释", scores: { macro: 3, index: 1 } },
-      { label: "方法、指标、模型和可验证规则", scores: { quant: 2, technical: 2 } }
+      { label: "捡漏鉴定师：便宜可以，但必须真有价值", scores: { value: 3 } },
+      { label: "商业侦探：喜欢研究一家公司怎么长大", scores: { growth: 3 } },
+      { label: "长期挂机玩家：少折腾，靠时间和纪律升级", scores: { index: 2, psychology: 2 } },
+      { label: "雷达观察员：想看趋势、周期、信号和数据", scores: { macro: 2, technical: 2, quant: 1 } }
     ]
   }
 ];
 
 const themeAdvice = {
   value: {
-    title: "价值投资路线",
-    reason: "你适合先建立估值、风险控制和企业所有权视角，再慢慢学习公司研究。",
+    code: "SAFE",
+    title: "安全垫守护型",
+    reason: "你不是胆小，你只是讨厌不明不白地亏钱。你适合先学会看价格和价值的关系，给每个决定留出余地。",
     bookIds: ["intelligent-investor", "buffett-letters"]
   },
   growth: {
-    title: "成长投资路线",
-    reason: "你更适合从行业空间、产品竞争力和管理层质量理解优秀公司的成长。",
+    code: "SEEK",
+    title: "十倍股侦探型",
+    reason: "你会被“这家公司为什么会变强”吸引。你适合从生活里的好产品出发，再学习怎么验证增长是不是真的。",
     bookIds: ["common-stocks", "lynch-one-up"]
   },
   index: {
-    title: "指数投资路线",
-    reason: "你适合先用低成本、分散化和长期配置建立稳健的投资底座。",
+    code: "LAZY",
+    title: "佛系配置型",
+    reason: "你不想每天盯盘，也不想把人生押在一次判断上。你适合先建立简单、分散、低成本、能长期坚持的底座。",
     bookIds: ["random-walk", "common-sense-mutual-funds"]
   },
   technical: {
-    title: "技术分析路线",
-    reason: "你适合把价格行为当成观察工具，同时把风险收益比和交易纪律放在前面。",
+    code: "FLOW",
+    title: "趋势雷达型",
+    reason: "你对市场节奏很敏感，喜欢看价格怎么走。你适合把图表当作观察工具，同时先学会失败时怎么退出。",
     bookIds: ["market-technical-analysis"]
   },
   macro: {
-    title: "宏观与周期路线",
-    reason: "你适合从信用、估值、情绪和风险偏好理解市场所处的位置。",
+    code: "CYCLE",
+    title: "周期天气预报型",
+    reason: "你会自然地问：现在的大环境是不是变了？你适合从周期、情绪和风险偏好理解市场温度。",
     bookIds: ["cycles"]
   },
   behavior: {
-    title: "行为金融路线",
-    reason: "你适合优先识别认知偏误、损失厌恶和过度自信，减少情绪化决策。",
+    code: "MIND",
+    title: "反上头清醒型",
+    reason: "你知道最大的对手常常不是市场，而是自己的情绪。你适合先学习怎么识别冲动、偏见和追涨杀跌。",
     bookIds: ["thinking-fast-slow", "psychology-of-money"]
   },
   quant: {
-    title: "量化投资路线",
-    reason: "你适合学习数据、回测、因子和规则化流程，但要先理解过拟合和交易成本。",
+    code: "DATA",
+    title: "数据规则控型",
+    reason: "你更信规则和证据，不太喜欢只凭感觉。你适合学习如何把想法变成可测试的规则，也要小心过度拟合历史。",
     bookIds: ["quant-black-box"]
   },
   psychology: {
-    title: "心理与叙事路线",
-    reason: "你适合从长期财富观、行为习惯和留有余地开始，先建立能坚持的系统。",
+    code: "CALM",
+    title: "长期心态派",
+    reason: "你更关心这套方法自己能不能坚持。你适合从财富观、习惯、时间和留有余地开始，先把系统搭稳。",
     bookIds: ["psychology-of-money", "intelligent-investor"]
   }
 };
@@ -623,7 +631,7 @@ function renderQuiz() {
         `
       )
       .join("")}
-    <button class="quiz-submit" type="submit">查看推荐路线</button>
+    <button class="quiz-submit" type="submit">生成我的投资人格</button>
   `;
 }
 
@@ -689,11 +697,11 @@ function renderRecommendation() {
   els.recommendationPanel.classList.remove("hidden");
   els.recommendationPanel.innerHTML = `
     <div>
-      <p class="eyebrow">你的学习路线</p>
+      <p class="eyebrow">你的投资人格：${escapeHtml(primaryAdvice.code)}</p>
       <h2>${escapeHtml(primaryAdvice.title)}</h2>
       <p>${escapeHtml(primaryAdvice.reason)}</p>
       <div class="route-tags">
-        <span>主路线：${escapeHtml(primaryTheme?.name || "")}</span>
+        <span>适配流派：${escapeHtml(primaryTheme?.name || "")}</span>
         ${secondaryThemes.map((theme) => `<span>可补充：${escapeHtml(theme.name)}</span>`).join("")}
       </div>
     </div>
@@ -708,7 +716,7 @@ function renderRecommendation() {
           `
         )
         .join("")}
-      <button class="secondary-action" id="retake-quiz" type="button">重新测试</button>
+      <button class="secondary-action" id="retake-quiz" type="button">重新测一次</button>
     </div>
   `;
 
