@@ -8,7 +8,8 @@ const state = {
   selectedPointId: "",
   quizResult: null,
   masteredIds: new Set(),
-  beginnerMode: true
+  beginnerMode: true,
+  introSeen: false
 };
 
 const els = {
@@ -29,8 +30,28 @@ const els = {
   citations: document.querySelector("#citations"),
   recommendationPanel: document.querySelector("#recommendation-panel"),
   quizModal: document.querySelector("#quiz-modal"),
+  introPanel: document.querySelector("#intro-panel"),
   quizForm: document.querySelector("#quiz-form")
 };
+
+const marketIntroSteps = [
+  {
+    title: "1. 你买的不是代码，是资产",
+    body: "股票可以先理解成“拥有一小块公司”；基金和指数可以先理解成“一篮子公司”。屏幕上跳动的是价格，背后真正重要的是资产能不能长期创造价值。"
+  },
+  {
+    title: "2. 市场每天报价，但不等于每天审判",
+    body: "价格会上下波动，有时是信息变化，有时只是大家情绪变化。新手先练习一件事：把“今天涨跌”跟“这个东西到底好不好”分开看。"
+  },
+  {
+    title: "3. 风险不是吓人的词，是不确定性",
+    body: "投资没有“稳赚剧本”。风险包括买贵了、看错了、急用钱、跟风上头、承受不了下跌。先知道自己能承受什么，再谈适合读哪类书。"
+  },
+  {
+    title: "4. 经典书不是让你背黑话",
+    body: "安全边际、护城河、有效市场这些词，本质都是生活问题：贵不贵、靠不靠谱、能不能坚持。知投会先把它们翻成白话，再带你回到书。"
+  }
+];
 
 const quizQuestions = [
   {
@@ -197,6 +218,95 @@ const themeChecks = {
   psychology: "这套做法在压力很大时，我还能坚持吗？"
 };
 
+const bookGuides = {
+  "intelligent-investor": {
+    question: "市场每天给你一个价格，你怎么不被它牵着走？",
+    entry: "先把这本书当成“新手防踩坑手册”：它不是教你找暴富按钮，而是教你先别把自己买到被动。",
+    steps: ["先分清价格和价值", "再理解安全边际", "最后学习怎么面对市场情绪"]
+  },
+  "buffett-letters": {
+    question: "如果股票背后是一门生意，你要看懂什么？",
+    entry: "这本更像企业观察课：从买卖股票，切换到理解公司、管理层和长期现金流。",
+    steps: ["先看公司怎么赚钱", "再看优势能不能延续", "最后看管理层怎么花钱"]
+  },
+  "common-stocks": {
+    question: "一家好公司为什么能一年一年变强？",
+    entry: "把它当作成长公司侦探课：不是听故事热血，而是验证增长有没有真实土壤。",
+    steps: ["先看市场空间", "再看产品和组织能力", "最后检查增长质量"]
+  },
+  "lynch-one-up": {
+    question: "生活里看到的好产品，怎么变成真正的研究？",
+    entry: "这本适合小白入门，因为它从商场、超市、身边品牌出发，但会提醒你：喜欢不等于懂。",
+    steps: ["先记录生活线索", "再讲清商业故事", "最后用财务和估值验证"]
+  },
+  "random-walk": {
+    question: "如果市场里聪明人很多，普通人该怎么参与？",
+    entry: "它先帮你降低“我必须打败所有人”的压力，理解为什么低成本、分散、长期会成为底层方案。",
+    steps: ["先理解市场很难预测", "再理解分散和成本", "最后建立长期规则"]
+  },
+  "common-sense-mutual-funds": {
+    question: "买基金时，哪些东西会悄悄吃掉你的收益？",
+    entry: "这本像基金消费避坑指南：先看费用、结构和纪律，再看收益排行榜。",
+    steps: ["先看成本", "再看分散和跟踪", "最后设计持有和再平衡规则"]
+  },
+  "market-technical-analysis": {
+    question: "价格图表到底能告诉你什么，不能告诉你什么？",
+    entry: "把技术分析当成观察市场行为的工具，不当成预测未来的水晶球。",
+    steps: ["先看趋势", "再看成交量确认", "最后永远准备失败预案"]
+  },
+  cycles: {
+    question: "为什么大家越乐观时，风险可能越高？",
+    entry: "这本不是教你精确预测日期，而是教你看市场温度：热到发烫时少点上头，冷到没人看时多点冷静。",
+    steps: ["先看情绪温度", "再看信用和风险偏好", "最后承认周期不是钟表"]
+  },
+  "thinking-fast-slow": {
+    question: "为什么明明想理性，最后还是会冲动？",
+    entry: "这本是投资前的大脑说明书：先认识自己的错觉，再设计办法减少冲动决策。",
+    steps: ["先认识直觉反应", "再识别常见偏误", "最后建立慢一点的决策流程"]
+  },
+  "quant-black-box": {
+    question: "如果把投资想法写成规则，会发生什么？",
+    entry: "这本把量化拆成普通人能理解的流程：数据、规则、回测、执行、风控，一个都不能神化。",
+    steps: ["先理解规则化", "再理解回测局限", "最后看成本和风控"]
+  },
+  "psychology-of-money": {
+    question: "为什么投资最后拼的常常不是智商，而是行为？",
+    entry: "这本适合完全小白先读，因为它从生活、欲望、自由感和留余地讲起。",
+    steps: ["先理解钱和人的关系", "再理解时间和复利", "最后给生活留安全边际"]
+  }
+};
+
+const conceptTranslations = [
+  { terms: ["安全边际"], text: "别把自己买到进退两难的位置。先估一个保守价值，再等价格给你留余地。" },
+  { terms: ["内在价值"], text: "先问“它大概真正值多少钱”，不要只盯着今天别人愿意多少钱买。" },
+  { terms: ["估值"], text: "就是判断现在这个价格贵不贵，像买房、买手机前先问值不值。" },
+  { terms: ["市场先生"], text: "把市场想成一个每天来报价、情绪很不稳定的人。你可以听报价，但不用被他指挥。" },
+  { terms: ["护城河"], text: "问的是：别人为什么不容易抢走这家公司生意？" },
+  { terms: ["资本配置"], text: "公司赚到钱后怎么花。会花钱的公司，才更可能长期变强。" },
+  { terms: ["有效市场"], text: "市场里聪明人很多，长期捡漏没那么容易，所以普通人要重视成本和分散。" },
+  { terms: ["分散"], text: "别把一次判断变成人生押注，把风险分给不同资产和不同时间。" },
+  { terms: ["择时"], text: "想猜最低点和最高点，难度通常比新手想象高很多。" },
+  { terms: ["再平衡"], text: "组合跑偏后拉回原计划，像定期整理书桌，不是预测明天涨跌。" },
+  { terms: ["回撤"], text: "账户从高点跌下来多少。你能不能扛住它，决定你能不能坚持。" },
+  { terms: ["趋势"], text: "先看市场脚步往哪边走，但要记住脚步也会突然变向。" },
+  { terms: ["支撑", "阻力"], text: "它们是市场记忆，不是魔法墙。价格到这些位置时，买卖力量可能变化。" },
+  { terms: ["成交量"], text: "看有多少人真的参与了这次价格变化，热闹程度也会传递信息。" },
+  { terms: ["信用周期"], text: "钱容易借和不容易借的循环，会放大经济和资产价格的起伏。" },
+  { terms: ["风险偏好"], text: "大家愿不愿意冒险。越兴奋的时候，价格里可能塞进了越多好消息。" },
+  { terms: ["确认偏误"], text: "只看支持自己观点的证据。投资里它会让人越研究越固执。" },
+  { terms: ["损失厌恶"], text: "亏钱的痛感太强，所以人容易死扛错误，也容易太早卖掉好东西。" },
+  { terms: ["锚定"], text: "被某个数字绑住，比如买入价或历史高点，但这些数字不一定说明现在值多少。" },
+  { terms: ["基准率"], text: "先看同类事情通常怎样，别一上来就相信自己遇到了例外。" },
+  { terms: ["回测"], text: "拿历史数据试跑策略。它能帮你排雷，但不能承诺未来。" },
+  { terms: ["过拟合"], text: "规则太迎合过去的细节，看起来聪明，换个环境可能就失灵。" },
+  { terms: ["因子"], text: "用一些可观察特征给资产分类，比如便宜、动量、质量。" },
+  { terms: ["尾部事件"], text: "小概率但影响巨大的事。承认它存在，所以投资和生活都要留余地。" },
+  { terms: ["复利"], text: "收益继续生收益。它最怕中断，也怕一次大亏把前面积累打掉。" },
+  { terms: ["现金流"], text: "真正进出账户的钱。故事再好，也要看有没有真金白银支持。" },
+  { terms: ["能力圈"], text: "不是只待在舒适区，而是诚实承认自己哪些东西看得懂、哪些看不懂。" },
+  { terms: ["价值陷阱"], text: "看起来便宜，但便宜背后可能是生意真的变差了。" }
+];
+
 function normalize(value) {
   return String(value).toLowerCase().replace(/\s+/g, "");
 }
@@ -243,6 +353,31 @@ function loadBeginnerMode() {
 
 function saveBeginnerMode() {
   localStorage.setItem("zhitou.beginnerMode", state.beginnerMode ? "on" : "off");
+}
+
+function loadIntroSeen() {
+  return localStorage.getItem("zhitou.marketIntroSeen") === "yes";
+}
+
+function saveIntroSeen() {
+  state.introSeen = true;
+  localStorage.setItem("zhitou.marketIntroSeen", "yes");
+}
+
+function guideForBook(book) {
+  const theme = themeById(book.themeId);
+  return (
+    bookGuides[book.id] || {
+      question: `这本书想帮你理解${theme?.name || "投资"}里的哪一个核心问题？`,
+      entry: "先抓主问题，再看关键概念，最后回到知识点和原书。这样学习会更像一条路线，而不是随机背卡片。",
+      steps: ["先读白话入口", "再看核心概念", "最后做自己的复述"]
+    }
+  );
+}
+
+function conceptTranslationForPoint(point) {
+  const haystack = [point.title, point.explanation, point.application, point.misconception, point.tags.join(" ")].join(" ");
+  return conceptTranslations.find((entry) => entry.terms.some((term) => haystack.includes(term)))?.text || "";
 }
 
 function filteredBooks() {
@@ -461,7 +596,7 @@ function renderGlossary(point) {
   const terms = termsForPoint(point);
   return `
     <section class="term-glossary" aria-label="术语速查">
-      <h4>这张卡里的术语</h4>
+      <h4>别怕，这些词可以这样理解</h4>
       <div class="term-list">
         ${terms
           .map(
@@ -526,6 +661,7 @@ function renderBookHero() {
   const book = bookById(state.selectedBookId) || filteredBooks()[0] || state.books[0];
   if (!book) return;
   const theme = themeById(book.themeId);
+  const guide = guideForBook(book);
   els.bookHero.innerHTML = `
     <div>
       <p class="eyebrow">${escapeHtml(theme?.name || "")}</p>
@@ -536,14 +672,28 @@ function renderBookHero() {
       <span>${escapeHtml(book.difficulty)}</span>
       <span>${escapeHtml(book.audience)}</span>
     </div>
+    <section class="book-guide" aria-label="书籍导读">
+      <div>
+        <span class="mini-label">这本书先解决</span>
+        <h3>${escapeHtml(guide.question)}</h3>
+        <p>${escapeHtml(guide.entry)}</p>
+      </div>
+      <ol class="guide-steps">
+        ${guide.steps.map((step, index) => `<li><strong>${index + 1}</strong><span>${escapeHtml(step)}</span></li>`).join("")}
+      </ol>
+    </section>
   `;
 }
 
 function renderPoints() {
   const points = filteredPoints();
+  const currentBook = bookById(state.selectedBookId);
   els.pointList.innerHTML =
     points.length > 0
-      ? points
+      ? `<div class="learning-map-head">
+          <span>本书学习顺序</span>
+          <small>${currentBook ? escapeHtml(currentBook.title) : "先选一本书，再按顺序读"}</small>
+        </div>${points
           .map(
             (point) => `
               <button class="point-card ${state.selectedPointId === point.id ? "selected" : ""} ${state.masteredIds.has(point.id) ? "mastered" : ""}" data-point="${escapeHtml(point.id)}" type="button">
@@ -552,7 +702,7 @@ function renderPoints() {
               </button>
             `
           )
-          .join("")
+          .join("")}`
       : `<p class="empty-state">没有匹配的知识点，试试放宽搜索词或切换主题。</p>`;
 
   els.pointList.querySelectorAll("button").forEach((button) => {
@@ -562,19 +712,21 @@ function renderPoints() {
   const selectedPoint = state.knowledgePoints.find((point) => point.id === state.selectedPointId) || points[0] || state.knowledgePoints[0];
   if (!selectedPoint) return;
   const isMastered = state.masteredIds.has(selectedPoint.id);
+  const conceptTranslation = conceptTranslationForPoint(selectedPoint);
   els.pointDetail.innerHTML = `
     <div class="detail-heading">
       <span aria-hidden="true">▤</span>
       <div>
         <h3>${escapeHtml(selectedPoint.title)}</h3>
+        ${conceptTranslation ? `<p class="concept-translation">小白翻译：${escapeHtml(conceptTranslation)}</p>` : ""}
         <p>${escapeHtml(selectedPoint.sourceBook)}｜${escapeHtml(selectedPoint.sourceNote)}</p>
       </div>
     </div>
     ${renderBeginnerBlock(selectedPoint)}
     <dl>
-      <div><dt>核心解释</dt><dd>${renderWithTerms(selectedPoint.explanation)}</dd></div>
-      <div><dt>适用场景</dt><dd>${renderWithTerms(selectedPoint.application)}</dd></div>
-      <div><dt>常见误区</dt><dd>${renderWithTerms(selectedPoint.misconception)}</dd></div>
+      <div><dt>这句话在讲什么</dt><dd>${renderWithTerms(selectedPoint.explanation)}</dd></div>
+      <div><dt>什么时候会用到</dt><dd>${renderWithTerms(selectedPoint.application)}</dd></div>
+      <div><dt>新手最容易误会</dt><dd>${renderWithTerms(selectedPoint.misconception)}</dd></div>
     </dl>
     ${renderGlossary(selectedPoint)}
     <div class="tag-row">${selectedPoint.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
@@ -608,6 +760,45 @@ function render() {
   renderRecommendation();
 }
 
+function showQuizStep() {
+  saveIntroSeen();
+  els.introPanel?.classList.add("hidden");
+  els.quizForm.classList.remove("hidden");
+  els.quizForm.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderIntro() {
+  if (!els.introPanel) return;
+  els.introPanel.innerHTML = `
+    <section class="intro-panel-content" aria-label="金融市场小白先修课">
+      <div class="intro-lead">
+        <span class="mini-label">完全小白先看这里</span>
+        <h3>不用先懂股票术语，先建立 4 个最小概念</h3>
+        <p>看完这一步，再做测试就不会像在答专业考试。你只需要先知道：市场里交易的是资产，价格会波动，风险来自不确定性，经典书是在帮你建立判断框架。</p>
+      </div>
+      <div class="intro-steps">
+        ${marketIntroSteps
+          .map(
+            (step) => `
+              <article>
+                <h4>${escapeHtml(step.title)}</h4>
+                <p>${escapeHtml(step.body)}</p>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+      <div class="intro-actions">
+        <button class="intro-start" data-intro-action="start" type="button">我大概懂了，开始测试</button>
+        <button class="intro-skip" data-intro-action="start" type="button">我已经懂一点，直接测</button>
+      </div>
+    </section>
+  `;
+  els.introPanel.querySelectorAll("[data-intro-action='start']").forEach((button) => {
+    button.addEventListener("click", showQuizStep);
+  });
+}
+
 function renderQuiz() {
   els.quizForm.innerHTML = `
     ${quizQuestions
@@ -631,7 +822,7 @@ function renderQuiz() {
         `
       )
       .join("")}
-    <button class="quiz-submit" type="submit">生成我的投资人格</button>
+    <button class="quiz-submit" type="submit">生成我的入门学习路线</button>
   `;
 }
 
@@ -673,10 +864,14 @@ function loadQuizResult() {
 }
 
 function showQuizIfNeeded() {
+  renderIntro();
   renderQuiz();
   state.quizResult = loadQuizResult();
+  state.introSeen = loadIntroSeen();
   if (!state.quizResult) {
     els.quizModal.classList.remove("hidden");
+    els.introPanel?.classList.toggle("hidden", state.introSeen);
+    els.quizForm.classList.toggle("hidden", !state.introSeen);
     return;
   }
   applyRecommendation(state.quizResult.primaryThemeId);
@@ -697,7 +892,7 @@ function renderRecommendation() {
   els.recommendationPanel.classList.remove("hidden");
   els.recommendationPanel.innerHTML = `
     <div>
-      <p class="eyebrow">你的投资人格：${escapeHtml(primaryAdvice.code)}</p>
+      <p class="eyebrow">你的入门路线：${escapeHtml(primaryAdvice.code)}</p>
       <h2>${escapeHtml(primaryAdvice.title)}</h2>
       <p>${escapeHtml(primaryAdvice.reason)}</p>
       <div class="route-tags">
@@ -716,7 +911,7 @@ function renderRecommendation() {
           `
         )
         .join("")}
-      <button class="secondary-action" id="retake-quiz" type="button">重新测一次</button>
+      <button class="secondary-action" id="retake-quiz" type="button">重新测路线</button>
     </div>
   `;
 
@@ -728,6 +923,8 @@ function renderRecommendation() {
   });
   els.recommendationPanel.querySelector("#retake-quiz")?.addEventListener("click", () => {
     renderQuiz();
+    els.introPanel?.classList.add("hidden");
+    els.quizForm.classList.remove("hidden");
     els.quizModal.classList.remove("hidden");
   });
 }
@@ -824,6 +1021,7 @@ state.books = data.books;
 state.knowledgePoints = data.knowledgePoints;
 state.masteredIds = loadMasteredIds();
 state.beginnerMode = loadBeginnerMode();
+state.introSeen = loadIntroSeen();
 state.selectedBookId = state.books[0]?.id || "";
 state.selectedPointId = state.knowledgePoints.find((point) => point.bookId === state.selectedBookId)?.id || "";
 render();
