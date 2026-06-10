@@ -5,6 +5,7 @@ const state = {
   query: "",
   themeId: "all",
   selectedBookId: "",
+  selectedSectionId: "",
   selectedPointId: "",
   quizResult: null,
   masteredIds: new Set(),
@@ -276,6 +277,65 @@ const bookGuides = {
   }
 };
 
+const bookDeepGuides = {
+  "intelligent-investor": {
+    oneLine: "这本书不是教你抓暴涨股票，而是教你在市场情绪很乱的时候，如何少犯大错、看懂价格和价值的关系。",
+    problem: "新手最容易把“价格上涨”当成“东西更值钱”，也容易把“跌很多”当成“变便宜”。这本书先帮你建立一个防守框架：先看清资产，再看价格，最后决定要不要参与。",
+    story:
+      "想象你每天路过一家店，有个人天天问你要不要买下这家店。有时候他报价很高，有时候突然很低。你真正要做的不是被他的报价吓到，而是判断这家店本身值多少钱，以及这个报价有没有给你留下余地。",
+    takeaways: ["市场每天报价，但报价不等于价值", "便宜不等于值得买，买入要留安全边际", "普通投资者先学会防守，比追求聪明操作更重要", "投资要有依据、纪律和复核，而不是只靠感觉"],
+    sections: [
+      {
+        id: "ii-market",
+        title: "第一章：市场不是老师，只是报价员",
+        plainTitle: "先别被涨跌牵着走",
+        summary: "这部分先解决一个小白最常见的问题：看到涨跌就觉得市场在告诉自己对错。格雷厄姆的意思是，市场只是每天给你报价，情绪经常很重，你可以利用它，但不用服从它。",
+        pointIds: ["kp-002", "kp-003", "kp-007"],
+        checkpoint: "看完这一章，你应该能解释：为什么今天涨了不代表你判断正确，今天跌了也不代表你一定错了。"
+      },
+      {
+        id: "ii-price-value",
+        title: "第二章：价格和价值不是一回事",
+        plainTitle: "先问值不值，再问涨不涨",
+        summary: "这一章把投资从“猜价格”拉回“看资产”。价格是市场今天愿意给的数字，价值是你对这门生意或资产长期质量的判断。",
+        pointIds: ["kp-005", "kp-006"],
+        checkpoint: "看完这一章，你应该能解释：为什么好公司买贵了也可能不是好投资。"
+      },
+      {
+        id: "ii-margin",
+        title: "第三章：安全边际到底保护什么",
+        plainTitle: "别把自己买到被动的位置",
+        summary: "安全边际不是稳赚按钮，而是承认自己会估错、市场会波动、企业会变化，所以买入时要给错误留下缓冲。",
+        pointIds: ["kp-001", "kp-008"],
+        checkpoint: "看完这一章，你应该能解释：为什么“跌得多”不等于有安全边际。"
+      },
+      {
+        id: "ii-defensive",
+        title: "第四章：普通投资者先防守",
+        plainTitle: "先避免大错，再追求做对",
+        summary: "对新手来说，最重要的不是每次都很聪明，而是别让一次冲动毁掉长期复利。防御型投资者的核心，是分散、纪律、低成本和可坚持。",
+        pointIds: ["kp-004", "kp-007", "kp-008"],
+        checkpoint: "看完这一章，你应该能解释：为什么保守不等于没追求，而是在保护长期游戏资格。"
+      },
+      {
+        id: "ii-process",
+        title: "第五章：把投资变成可复核的流程",
+        plainTitle: "不要只凭感觉下单",
+        summary: "最后把前面的概念连成一个动作：写下理由、估算价值、检查风险、设置纪律，并在市场情绪很强时回到流程。",
+        pointIds: ["kp-003", "kp-005", "kp-007"],
+        checkpoint: "看完这一章，你应该能说出：一次投资决定至少要写清哪些依据。"
+      }
+    ],
+    finalQuestions: [
+      "为什么股价上涨不一定代表公司更值钱？",
+      "为什么便宜不等于值得买？",
+      "安全边际到底防的是什么？",
+      "普通投资者为什么先要防守？",
+      "市场情绪很极端时，应该先问什么？"
+    ]
+  }
+};
+
 const conceptTranslations = [
   { terms: ["安全边际"], text: "别把自己买到进退两难的位置。先估一个保守价值，再等价格给你留余地。" },
   { terms: ["内在价值"], text: "先问“它大概真正值多少钱”，不要只盯着今天别人愿意多少钱买。" },
@@ -378,6 +438,56 @@ function guideForBook(book) {
 function conceptTranslationForPoint(point) {
   const haystack = [point.title, point.explanation, point.application, point.misconception, point.tags.join(" ")].join(" ");
   return conceptTranslations.find((entry) => entry.terms.some((term) => haystack.includes(term)))?.text || "";
+}
+
+function pointById(id) {
+  return state.knowledgePoints.find((point) => point.id === id);
+}
+
+function pointsForBook(bookId) {
+  return state.knowledgePoints.filter((point) => point.bookId === bookId);
+}
+
+function chunkPoints(points, count) {
+  const chunkSize = Math.max(1, Math.ceil(points.length / count));
+  return Array.from({ length: count }, (_, index) => points.slice(index * chunkSize, (index + 1) * chunkSize));
+}
+
+function sectionsForBook(book) {
+  if (!book) return [];
+  const deepGuide = bookDeepGuides[book.id];
+  if (deepGuide) return deepGuide.sections;
+
+  const guide = guideForBook(book);
+  const bookPoints = pointsForBook(book.id);
+  const chunks = chunkPoints(bookPoints, guide.steps.length);
+  return guide.steps.map((step, index) => ({
+    id: `${book.id}-section-${index + 1}`,
+    title: `第 ${index + 1} 章：${step}`,
+    plainTitle: step,
+    summary: index === 0 ? guide.entry : "这一章把相关知识点连成一条线，先理解主问题，再回到具体概念。",
+    pointIds: chunks[index].map((point) => point.id),
+    checkpoint: `看完这一章，试着用自己的话解释：${step} 为什么重要？`
+  }));
+}
+
+function sectionById(bookId, sectionId) {
+  return sectionsForBook(bookById(bookId)).find((section) => section.id === sectionId);
+}
+
+function firstSectionForBook(bookId) {
+  return sectionsForBook(bookById(bookId))[0];
+}
+
+function sectionForPoint(bookId, pointId) {
+  return sectionsForBook(bookById(bookId)).find((section) => section.pointIds.includes(pointId));
+}
+
+function setSelectedBook(bookId) {
+  state.selectedBookId = bookId;
+  const firstSection = firstSectionForBook(bookId);
+  state.selectedSectionId = firstSection?.id || "";
+  state.selectedPointId = firstSection?.pointIds.find((pointId) => pointById(pointId)) || pointsForBook(bookId)[0]?.id || "";
 }
 
 function filteredBooks() {
@@ -486,8 +596,7 @@ function selectTheme(themeId) {
   state.themeId = themeId;
   const nextBook = state.books.find((book) => themeId === "all" || book.themeId === themeId);
   if (nextBook) {
-    state.selectedBookId = nextBook.id;
-    state.selectedPointId = state.knowledgePoints.find((point) => point.bookId === nextBook.id)?.id || "";
+    setSelectedBook(nextBook.id);
   }
   render();
 }
@@ -496,19 +605,29 @@ function applyRecommendation(themeId) {
   const firstBook = state.books.find((book) => book.themeId === themeId);
   if (!firstBook) return;
   state.themeId = themeId;
-  state.selectedBookId = firstBook.id;
-  state.selectedPointId = state.knowledgePoints.find((point) => point.bookId === firstBook.id)?.id || "";
+  setSelectedBook(firstBook.id);
   render();
 }
 
 function selectBook(bookId) {
-  state.selectedBookId = bookId;
-  state.selectedPointId = state.knowledgePoints.find((point) => point.bookId === bookId)?.id || "";
+  setSelectedBook(bookId);
   render();
 }
 
 function selectPoint(pointId) {
   state.selectedPointId = pointId;
+  const point = pointById(pointId);
+  if (point) {
+    state.selectedBookId = point.bookId;
+    state.selectedSectionId = sectionForPoint(point.bookId, point.id)?.id || state.selectedSectionId;
+  }
+  render();
+}
+
+function selectSection(sectionId) {
+  state.selectedSectionId = sectionId;
+  const section = sectionById(state.selectedBookId, sectionId);
+  state.selectedPointId = section?.pointIds.find((pointId) => pointById(pointId)) || state.selectedPointId;
   render();
 }
 
@@ -662,81 +781,169 @@ function renderBookHero() {
   if (!book) return;
   const theme = themeById(book.themeId);
   const guide = guideForBook(book);
+  const deepGuide = bookDeepGuides[book.id];
+  const heroSteps = deepGuide ? deepGuide.sections.map((section) => section.plainTitle) : guide.steps;
   els.bookHero.innerHTML = `
-    <div>
+    <div class="book-overview">
       <p class="eyebrow">${escapeHtml(theme?.name || "")}</p>
       <h2>${escapeHtml(book.title)}</h2>
-      <p>${escapeHtml(book.summary)}</p>
+      <p>${escapeHtml(deepGuide?.oneLine || book.summary)}</p>
     </div>
     <div class="meta-box">
       <span>${escapeHtml(book.difficulty)}</span>
       <span>${escapeHtml(book.audience)}</span>
     </div>
-    <section class="book-guide" aria-label="书籍导读">
+    <section class="book-guide ${deepGuide ? "book-guide-deep" : ""}" aria-label="书籍导读">
       <div>
-        <span class="mini-label">这本书先解决</span>
+        <span class="mini-label">${deepGuide ? "这本书到底在讲什么" : "这本书先解决"}</span>
         <h3>${escapeHtml(guide.question)}</h3>
-        <p>${escapeHtml(guide.entry)}</p>
+        <p>${escapeHtml(deepGuide?.problem || guide.entry)}</p>
       </div>
       <ol class="guide-steps">
-        ${guide.steps.map((step, index) => `<li><strong>${index + 1}</strong><span>${escapeHtml(step)}</span></li>`).join("")}
+        ${heroSteps.map((step, index) => `<li><strong>${index + 1}</strong><span>${escapeHtml(step)}</span></li>`).join("")}
       </ol>
     </section>
+    ${
+      deepGuide
+        ? `
+          <section class="book-story" aria-label="小白故事版导读">
+            <span class="mini-label">小白故事版导读</span>
+            <p>${escapeHtml(deepGuide.story)}</p>
+          </section>
+          <section class="book-takeaways" aria-label="读完应该明白什么">
+            <span class="mini-label">读完这本书，你应该明白</span>
+            <ul>${deepGuide.takeaways.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+          </section>
+        `
+        : ""
+    }
   `;
 }
 
 function renderPoints() {
-  const points = filteredPoints();
   const currentBook = bookById(state.selectedBookId);
-  els.pointList.innerHTML =
-    points.length > 0
-      ? `<div class="learning-map-head">
-          <span>本书学习顺序</span>
-          <small>${currentBook ? escapeHtml(currentBook.title) : "先选一本书，再按顺序读"}</small>
-        </div>${points
-          .map(
-            (point) => `
-              <button class="point-card ${state.selectedPointId === point.id ? "selected" : ""} ${state.masteredIds.has(point.id) ? "mastered" : ""}" data-point="${escapeHtml(point.id)}" type="button">
-                <span>${state.masteredIds.has(point.id) ? "✓ " : ""}${escapeHtml(point.title)}</span>
-                <small>${escapeHtml(point.tags.slice(0, 3).join(" / "))}</small>
-              </button>
-            `
-          )
-          .join("")}`
-      : `<p class="empty-state">没有匹配的知识点，试试放宽搜索词或切换主题。</p>`;
+  if (!currentBook) return;
 
-  els.pointList.querySelectorAll("button").forEach((button) => {
-    button.addEventListener("click", () => selectPoint(button.dataset.point));
+  const matchingPointIds = new Set(filteredPoints().map((point) => point.id));
+  const allSections = sectionsForBook(currentBook);
+  const visibleSections = state.query
+    ? allSections.filter((section) => section.pointIds.some((pointId) => matchingPointIds.has(pointId)))
+    : allSections;
+  const sections = visibleSections.length > 0 ? visibleSections : allSections;
+  const selectedSection = sections.find((section) => section.id === state.selectedSectionId) || sections[0];
+
+  if (!selectedSection) {
+    els.pointList.innerHTML = `<p class="empty-state">这本书还没有整理章节。</p>`;
+    els.pointDetail.innerHTML = "";
+    return;
+  }
+
+  state.selectedSectionId = selectedSection.id;
+  const sectionPoints = selectedSection.pointIds.map(pointById).filter(Boolean);
+  const visibleSectionPoints = state.query ? sectionPoints.filter((point) => matchingPointIds.has(point.id)) : sectionPoints;
+  const displayPoints = visibleSectionPoints.length > 0 ? visibleSectionPoints : sectionPoints;
+
+  if (!displayPoints.some((point) => point.id === state.selectedPointId)) {
+    state.selectedPointId = displayPoints[0]?.id || "";
+  }
+
+  els.pointList.innerHTML = `
+    <div class="learning-map-head">
+      <span>本书阅读地图</span>
+      <small>${escapeHtml(currentBook.title)}｜先看章节主线，再看知识点</small>
+    </div>
+    ${sections
+      .map((section, index) => {
+        const points = section.pointIds.map(pointById).filter(Boolean);
+        const masteredCount = points.filter((point) => state.masteredIds.has(point.id)).length;
+        return `
+          <button class="section-row ${selectedSection.id === section.id ? "selected" : ""}" data-section="${escapeHtml(section.id)}" type="button">
+            <strong>${index + 1}</strong>
+            <span>${escapeHtml(section.plainTitle || section.title)}</span>
+            <small>${escapeHtml(section.title)}｜${masteredCount}/${points.length} 已掌握</small>
+          </button>
+        `;
+      })
+      .join("")}
+  `;
+
+  els.pointList.querySelectorAll("[data-section]").forEach((button) => {
+    button.addEventListener("click", () => selectSection(button.dataset.section));
   });
 
-  const selectedPoint = state.knowledgePoints.find((point) => point.id === state.selectedPointId) || points[0] || state.knowledgePoints[0];
+  const selectedPoint = pointById(state.selectedPointId) || displayPoints[0];
   if (!selectedPoint) return;
   const isMastered = state.masteredIds.has(selectedPoint.id);
   const conceptTranslation = conceptTranslationForPoint(selectedPoint);
+  const deepGuide = bookDeepGuides[currentBook.id];
   els.pointDetail.innerHTML = `
-    <div class="detail-heading">
-      <span aria-hidden="true">▤</span>
-      <div>
-        <h3>${escapeHtml(selectedPoint.title)}</h3>
-        ${conceptTranslation ? `<p class="concept-translation">小白翻译：${escapeHtml(conceptTranslation)}</p>` : ""}
-        <p>${escapeHtml(selectedPoint.sourceBook)}｜${escapeHtml(selectedPoint.sourceNote)}</p>
+    <section class="section-detail" aria-label="当前章节">
+      <div class="section-intro">
+        <span class="mini-label">当前章节</span>
+        <h3>${escapeHtml(selectedSection.title)}</h3>
+        <p class="section-plain">${escapeHtml(selectedSection.plainTitle || "")}</p>
+        <p>${escapeHtml(selectedSection.summary)}</p>
+        <div class="section-check">
+          <strong>读完自测</strong>
+          <span>${escapeHtml(selectedSection.checkpoint)}</span>
+        </div>
       </div>
-    </div>
-    ${renderBeginnerBlock(selectedPoint)}
-    <dl>
-      <div><dt>这句话在讲什么</dt><dd>${renderWithTerms(selectedPoint.explanation)}</dd></div>
-      <div><dt>什么时候会用到</dt><dd>${renderWithTerms(selectedPoint.application)}</dd></div>
-      <div><dt>新手最容易误会</dt><dd>${renderWithTerms(selectedPoint.misconception)}</dd></div>
-    </dl>
-    ${renderGlossary(selectedPoint)}
-    <div class="tag-row">${selectedPoint.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
-    <div class="card-actions">
-      <button class="${isMastered ? "active" : ""}" data-action="mastered" type="button">${isMastered ? "已掌握，取消标记" : "标记为已掌握"}</button>
-      <button data-action="next" type="button">下一张</button>
-      <button data-action="random" type="button">随机卡片</button>
-      <button data-action="ask" type="button">让 AI 解释这张</button>
-    </div>
+      <div class="section-cards" aria-label="本章知识点">
+        ${displayPoints
+          .map(
+            (point) => `
+              <button class="section-point-card ${state.selectedPointId === point.id ? "selected" : ""} ${state.masteredIds.has(point.id) ? "mastered" : ""}" data-point="${escapeHtml(point.id)}" type="button">
+                <span>${state.masteredIds.has(point.id) ? "✓ " : ""}${escapeHtml(conceptTranslationForPoint(point) || point.title)}</span>
+                <small>${escapeHtml(point.title)}｜${escapeHtml(point.tags.slice(0, 2).join(" / "))}</small>
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    </section>
+
+    <article class="knowledge-detail-card" aria-label="知识点解释">
+      <div class="detail-heading">
+        <span aria-hidden="true">▤</span>
+        <div>
+          <span class="mini-label">本章知识点</span>
+          <h3>${escapeHtml(selectedPoint.title)}</h3>
+          ${conceptTranslation ? `<p class="concept-translation">小白翻译：${escapeHtml(conceptTranslation)}</p>` : ""}
+          <p>${escapeHtml(selectedPoint.sourceBook)}｜${escapeHtml(selectedPoint.sourceNote)}</p>
+        </div>
+      </div>
+      ${renderBeginnerBlock(selectedPoint)}
+      <dl>
+        <div><dt>这句话在讲什么</dt><dd>${renderWithTerms(selectedPoint.explanation)}</dd></div>
+        <div><dt>什么时候会用到</dt><dd>${renderWithTerms(selectedPoint.application)}</dd></div>
+        <div><dt>新手最容易误会</dt><dd>${renderWithTerms(selectedPoint.misconception)}</dd></div>
+      </dl>
+      ${renderGlossary(selectedPoint)}
+      <div class="tag-row">${selectedPoint.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
+      <div class="card-actions">
+        <button class="${isMastered ? "active" : ""}" data-action="mastered" type="button">${isMastered ? "已掌握，取消标记" : "标记为已掌握"}</button>
+        <button data-action="next" type="button">下一张</button>
+        <button data-action="random" type="button">随机知识点</button>
+        <button data-action="ask" type="button">让 AI 解释这张</button>
+      </div>
+    </article>
+
+    ${
+      deepGuide
+        ? `<section class="book-final-questions" aria-label="整本书自测问题">
+            <span class="mini-label">读完这本书，你能回答这些问题吗</span>
+            <ol>${deepGuide.finalQuestions.map((question) => `<li>${escapeHtml(question)}</li>`).join("")}</ol>
+          </section>`
+        : ""
+    }
   `;
+
+  els.pointDetail.querySelectorAll("[data-section]").forEach((button) => {
+    button.addEventListener("click", () => selectSection(button.dataset.section));
+  });
+  els.pointDetail.querySelectorAll("[data-point]").forEach((button) => {
+    button.addEventListener("click", () => selectPoint(button.dataset.point));
+  });
   els.pointDetail.querySelectorAll("[data-term]").forEach((button) => {
     button.addEventListener("click", () => showTerm(button.dataset.term));
   });
@@ -1022,7 +1229,6 @@ state.knowledgePoints = data.knowledgePoints;
 state.masteredIds = loadMasteredIds();
 state.beginnerMode = loadBeginnerMode();
 state.introSeen = loadIntroSeen();
-state.selectedBookId = state.books[0]?.id || "";
-state.selectedPointId = state.knowledgePoints.find((point) => point.bookId === state.selectedBookId)?.id || "";
+if (state.books[0]) setSelectedBook(state.books[0].id);
 render();
 showQuizIfNeeded();

@@ -277,6 +277,8 @@ h1 {
 
 .book-row,
 .point-card,
+.section-row,
+.section-point-card,
 .citations button {
   width: 100%;
   border-radius: 8px;
@@ -285,13 +287,17 @@ h1 {
 }
 
 .book-row span,
-.point-card span {
+.point-card span,
+.section-row span,
+.section-point-card span {
   display: block;
   font-weight: 700;
 }
 
 .book-row small,
 .point-card small,
+.section-row small,
+.section-point-card small,
 .citations small {
   display: block;
   color: var(--muted);
@@ -299,14 +305,43 @@ h1 {
 }
 
 .book-row.selected,
-.point-card.selected {
+.point-card.selected,
+.section-row.selected,
+.section-point-card.selected {
   border-color: var(--green);
   background: #eef7f1;
 }
 
-.point-card.mastered {
+.point-card.mastered,
+.section-point-card.mastered {
   border-color: #c8d7f0;
   background: #f4f8ff;
+}
+
+.section-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: start;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.section-row strong {
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.section-row span,
+.section-row small {
+  grid-column: 2;
 }
 
 .main-panel {
@@ -369,6 +404,11 @@ h1 {
   line-height: 1.7;
 }
 
+.book-guide-deep {
+  background: #eef7f1;
+  border-color: #bdd6cb;
+}
+
 .guide-steps {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -404,6 +444,38 @@ h1 {
   color: #344054;
   font-size: 13px;
   line-height: 1.45;
+}
+
+.book-story,
+.book-takeaways {
+  grid-column: 1 / -1;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.book-story {
+  border: 1px solid #ead6b7;
+  background: #fffaf1;
+}
+
+.book-story p {
+  color: #6b3f0d;
+  font-size: 15px;
+}
+
+.book-takeaways {
+  border: 1px solid #bdd6cb;
+  background: #f4fbf7;
+}
+
+.book-takeaways ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: #355246;
+  line-height: 1.6;
 }
 
 .point-layout {
@@ -444,10 +516,98 @@ h1 {
 }
 
 .point-detail {
+  display: grid;
+  gap: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 18px;
   background: #fbfcfa;
+}
+
+.section-detail,
+.knowledge-detail-card,
+.book-final-questions {
+  border-radius: 8px;
+}
+
+.section-detail {
+  display: grid;
+  gap: 14px;
+}
+
+.section-intro {
+  border: 1px solid #bdd6cb;
+  border-radius: 8px;
+  background: #f4fbf7;
+  padding: 16px;
+}
+
+.section-intro h3 {
+  margin-bottom: 6px;
+  font-size: 22px;
+}
+
+.section-intro p {
+  color: #355246;
+  line-height: 1.75;
+  margin-bottom: 0;
+}
+
+.section-plain {
+  color: var(--green-dark) !important;
+  font-weight: 800;
+  margin-bottom: 8px !important;
+}
+
+.section-check {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  border-top: 1px solid #bdd6cb;
+  padding-top: 12px;
+  color: #355246;
+}
+
+.section-check strong {
+  color: var(--green-dark);
+}
+
+.section-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.section-point-card {
+  min-height: 86px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.section-point-card span {
+  line-height: 1.45;
+}
+
+.knowledge-detail-card {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  padding: 16px;
+}
+
+.book-final-questions {
+  border: 1px solid #ead6b7;
+  background: #fffaf1;
+  padding: 14px;
+}
+
+.book-final-questions ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: #6b3f0d;
+  line-height: 1.65;
 }
 
 .detail-heading {
@@ -951,7 +1111,9 @@ dd {
 
   .beginner-card,
   .term-list,
-  .guide-steps {
+  .guide-steps,
+  .book-takeaways ul,
+  .section-cards {
     grid-template-columns: 1fr;
   }
 
