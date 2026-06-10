@@ -20,6 +20,7 @@ const els = {
   masteredCount: document.querySelector("#mastered-count"),
   searchInput: document.querySelector("#search-input"),
   beginnerToggle: document.querySelector("#beginner-toggle"),
+  introOpen: document.querySelector("#intro-open"),
   themeTabs: document.querySelector("#theme-tabs"),
   bookList: document.querySelector("#book-list"),
   bookHero: document.querySelector("#book-hero"),
@@ -974,6 +975,20 @@ function showQuizStep() {
   els.quizForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function closeIntro() {
+  saveIntroSeen();
+  els.quizModal.classList.add("hidden");
+  els.introPanel?.classList.add("hidden");
+}
+
+function openIntro() {
+  renderIntro();
+  renderQuiz();
+  els.quizModal.classList.remove("hidden");
+  els.introPanel?.classList.remove("hidden");
+  els.quizForm.classList.add("hidden");
+}
+
 function renderIntro() {
   if (!els.introPanel) return;
   els.introPanel.innerHTML = `
@@ -998,11 +1013,18 @@ function renderIntro() {
       <div class="intro-actions">
         <button class="intro-start" data-intro-action="start" type="button">我大概懂了，开始测试</button>
         <button class="intro-skip" data-intro-action="start" type="button">我已经懂一点，直接测</button>
+        <button class="intro-close" data-intro-action="close" type="button">先逛逛网站</button>
       </div>
     </section>
   `;
-  els.introPanel.querySelectorAll("[data-intro-action='start']").forEach((button) => {
-    button.addEventListener("click", showQuizStep);
+  els.introPanel.querySelectorAll("[data-intro-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.introAction === "close") {
+        closeIntro();
+      } else {
+        showQuizStep();
+      }
+    });
   });
 }
 
@@ -1209,6 +1231,7 @@ els.searchInput.addEventListener("input", (event) => {
   render();
 });
 els.askButton.addEventListener("click", ask);
+els.introOpen?.addEventListener("click", openIntro);
 els.beginnerToggle.addEventListener("click", () => {
   state.beginnerMode = !state.beginnerMode;
   saveBeginnerMode();
