@@ -9,7 +9,6 @@ const state = {
   selectedPointId: "",
   quizResult: null,
   masteredIds: new Set(),
-  beginnerMode: true,
   introSeen: false
 };
 
@@ -19,7 +18,6 @@ const els = {
   themeCount: document.querySelector("#theme-count"),
   masteredCount: document.querySelector("#mastered-count"),
   searchInput: document.querySelector("#search-input"),
-  beginnerToggle: document.querySelector("#beginner-toggle"),
   introOpen: document.querySelector("#intro-open"),
   themeTabs: document.querySelector("#theme-tabs"),
   bookList: document.querySelector("#book-list"),
@@ -408,14 +406,6 @@ function saveMasteredIds() {
   localStorage.setItem("zhitou.masteredIds", JSON.stringify([...state.masteredIds]));
 }
 
-function loadBeginnerMode() {
-  return localStorage.getItem("zhitou.beginnerMode") !== "off";
-}
-
-function saveBeginnerMode() {
-  localStorage.setItem("zhitou.beginnerMode", state.beginnerMode ? "on" : "off");
-}
-
 function loadIntroSeen() {
   return localStorage.getItem("zhitou.marketIntroSeen") === "yes";
 }
@@ -678,7 +668,7 @@ function renderWithTerms(text) {
   let index = 0;
 
   while (index < text.length) {
-    const matched = state.beginnerMode ? sortedTerms.find((term) => text.startsWith(term, index)) : null;
+    const matched = sortedTerms.find((term) => text.startsWith(term, index));
     if (matched) {
       output += `<button class="term-inline" data-term="${escapeHtml(matched)}" type="button">${escapeHtml(matched)}</button>`;
       index += matched.length;
@@ -692,7 +682,6 @@ function renderWithTerms(text) {
 }
 
 function renderBeginnerBlock(point) {
-  if (!state.beginnerMode) return "";
   return `
     <section class="beginner-card" aria-label="小白解释">
       <div>
@@ -712,7 +701,6 @@ function renderBeginnerBlock(point) {
 }
 
 function renderGlossary(point) {
-  if (!state.beginnerMode) return "";
   const terms = termsForPoint(point);
   return `
     <section class="term-glossary" aria-label="术语速查">
@@ -959,8 +947,6 @@ function render() {
   els.pointCount.textContent = state.knowledgePoints.length;
   els.themeCount.textContent = state.themes.length;
   els.masteredCount.textContent = `${state.masteredIds.size}/${state.knowledgePoints.length}`;
-  els.beginnerToggle.textContent = `小白模式：${state.beginnerMode ? "开" : "关"}`;
-  els.beginnerToggle.classList.toggle("active", state.beginnerMode);
   renderThemes();
   renderBooks();
   renderBookHero();
@@ -1232,11 +1218,6 @@ els.searchInput.addEventListener("input", (event) => {
 });
 els.askButton.addEventListener("click", ask);
 els.introOpen?.addEventListener("click", openIntro);
-els.beginnerToggle.addEventListener("click", () => {
-  state.beginnerMode = !state.beginnerMode;
-  saveBeginnerMode();
-  render();
-});
 els.quizForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const result = calculateQuizResult(new FormData(els.quizForm));
@@ -1250,7 +1231,6 @@ state.themes = data.themes;
 state.books = data.books;
 state.knowledgePoints = data.knowledgePoints;
 state.masteredIds = loadMasteredIds();
-state.beginnerMode = loadBeginnerMode();
 state.introSeen = loadIntroSeen();
 if (state.books[0]) setSelectedBook(state.books[0].id);
 render();
