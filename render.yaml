@@ -5,6 +5,14 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:
+      - key: KIMI_MODEL
+        value: kimi-k2.6
+      - key: KIMI_API_KEY
+        sync: false
+      - key: DEEPSEEK_MODEL
+        value: deepseek-v4-flash
+      - key: DEEPSEEK_API_KEY
+        sync: false
       - key: OPENAI_MODEL
         value: gpt-5-mini
       - key: OPENAI_BOOK_MODEL

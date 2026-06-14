@@ -601,7 +601,7 @@ function localAsk(question) {
 
   return {
     answer:
-      "当前是 GitHub Pages 静态演示版，暂时不能调用 AI 模型。我先基于本地知识库为你找到相关卡片；如果以后部署到支持后端的平台，再配置 OPENAI_API_KEY 就能恢复完整 AI 问答。",
+      "当前是 GitHub Pages 静态演示版，暂时不能调用 AI 模型。我先基于本地知识库为你找到相关卡片；部署后端并配置 KIMI_API_KEY、DEEPSEEK_API_KEY 或 OPENAI_API_KEY 后，就能恢复完整 AI 问答。",
     citations: matches
   };
 }
@@ -1207,12 +1207,12 @@ function closeImport() {
 function chooseImportFile(file) {
   if (!file) return;
   const extension = file.name.split(".").pop()?.toLowerCase();
-  const supported = ["pdf", "doc", "docx", "txt", "md"];
+  const supported = ["pdf", "doc", "docx", "txt", "md", "epub", "mobi"];
 
   if (!supported.includes(extension)) {
     state.importFile = null;
     els.generateGuide.disabled = true;
-    setImportStatus("目前支持 PDF、DOC、DOCX、TXT 和 Markdown 文件。", "error");
+    setImportStatus("目前支持 PDF、DOC、DOCX、TXT、Markdown、EPUB 和 MOBI 文件。", "error");
     return;
   }
 
@@ -1297,7 +1297,7 @@ async function createLocalStructurePreview(file) {
     })),
     closing: {
       whatChanged: ["已把文件整理为可继续处理的章节结构"],
-      nextSteps: ["部署 Node 后端并配置 OPENAI_API_KEY", "重新上传后生成完整解读"],
+      nextSteps: ["部署 Node 后端并配置 KIMI_API_KEY、DEEPSEEK_API_KEY 或 OPENAI_API_KEY", "重新上传后生成完整解读"],
       disclaimer: "这是本地结构预览，不是对原书内容的完整解读，也不构成投资建议。"
     },
     quality: {
@@ -1438,7 +1438,7 @@ async function generateImportedGuide() {
       return;
     }
     setImportStatus(
-      `${error.message || "生成失败。"} 当前 GitHub Pages 静态版不能处理 PDF 或 Word；部署 Node 后端并配置 API 密钥后即可使用。`,
+      `${error.message || "生成失败。"} 当前 GitHub Pages 静态版不能处理完整书籍；部署 Node 后端并配置 Kimi、DeepSeek 或 OpenAI API 密钥后即可使用。`,
       "error"
     );
   } finally {

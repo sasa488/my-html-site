@@ -16,23 +16,33 @@ npm run dev
 node server.mjs
 ```
 
-## AI 问答配置
+## AI 配置
 
 在项目根目录创建 `.env.local`：
 
 ```bash
+# 推荐：Kimi 原生文件解析支持 PDF、Word、图片 OCR 和电子书
+KIMI_API_KEY=你的 Kimi API Key
+KIMI_MODEL=kimi-k2.6
+
+# 以下为可选备用配置
+DEEPSEEK_API_KEY=你的 DeepSeek API Key
+DEEPSEEK_MODEL=deepseek-v4-flash
+
 OPENAI_API_KEY=你的 OpenAI API Key
 OPENAI_MODEL=gpt-5-mini
 OPENAI_BOOK_MODEL=gpt-5-mini
 ```
 
-未配置 `OPENAI_API_KEY` 时，应用仍可浏览和搜索知识库，AI 问答会给出配置提示。
+系统优先使用 Kimi，其次 DeepSeek，最后使用 OpenAI。三种密钥都未配置时，应用仍可浏览和搜索知识库，AI 功能会给出配置提示。
 
 ## 导入书籍
 
-点击页面顶部的“导入一本书”，可上传 PDF、DOC、DOCX、TXT 或 Markdown，单个文件最大 20MB。文件不会写入本项目磁盘，也不会自动加入公共书库；配置后端 API 密钥后，服务端会把文件作为本次请求的输入生成章节式解读。
+点击页面顶部的“导入一本书”，可上传 PDF、DOC、DOCX、TXT、Markdown、EPUB 或 MOBI，单个文件最大 20MB。文件只会在服务器临时处理，完成后删除，不会自动加入公共书库。
 
-GitHub Pages 静态版可以完成 TXT/Markdown 的本地目录预览，但不能安全调用 AI，也不能处理 PDF/Word。要让所有访客使用完整生成能力，需要部署本项目的 Node 服务并在服务端配置 `OPENAI_API_KEY`。
+使用 Kimi 时，文件会先交给官方 `file-extract` 接口解析，PDF 和图片型内容可使用 Kimi OCR，不需要另外部署 OCR 服务；提取完成后会删除 Kimi 临时文件。较长书籍将分段归纳后再合成为章节式解读。
+
+GitHub Pages 静态版可以完成 TXT/Markdown 的本地目录预览，但不能安全调用 AI，也不能处理完整书籍。要让所有访客使用完整生成能力，需要部署本项目的 Node 服务并在服务端配置 `KIMI_API_KEY`、`DEEPSEEK_API_KEY` 或 `OPENAI_API_KEY`。
 
 ## 在线部署
 
@@ -54,7 +64,7 @@ node scripts/export-static-pages.mjs
 
 1. 把本项目推送到 GitHub。
 2. 在 Render 创建 Blueprint 或 Web Service，选择这个仓库。
-3. 添加环境变量 `OPENAI_API_KEY`，可选添加 `OPENAI_MODEL=gpt-5-mini`。
+3. 推荐添加 Secret `KIMI_API_KEY`，并设置 `KIMI_MODEL=kimi-k2.6`；也可使用 DeepSeek 或 OpenAI 备用配置。
 4. 部署完成后，使用平台分配的公网域名访问。
 
 ## 内容边界
