@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: zhitou-knowledge-base
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: OPENAI_MODEL
+        value: gpt-5-mini
+      - key: OPENAI_BOOK_MODEL
+        value: gpt-5-mini
+      - key: OPENAI_API_KEY
+        sync: false

@@ -1,0 +1,11 @@
+{
+  "name": "zhitou-finance-knowledge-base",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "NODE_ENV=production node server.mjs",
+    "check": "node scripts/check-data.mjs",
+    "export:pages": "node scripts/export-static-pages.mjs"
+  }
+}
