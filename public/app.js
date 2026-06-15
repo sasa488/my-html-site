@@ -1406,6 +1406,31 @@ function renderImportedGuide(guide) {
   selectImportedChapter("overview");
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function waitForImportJob(jobId) {
+  const deadline = Date.now() + 10 * 60 * 1000;
+  let lastMessage = "";
+
+  while (Date.now() < deadline) {
+    const response = await fetch(`/api/import-book/${encodeURIComponent(jobId)}`, { cache: "no-store" });
+    const job = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(job.error || "无法读取书籍处理进度。");
+
+    if (job.status === "complete" && job.guide) return job;
+    if (job.status === "failed") throw new Error(job.message || "书籍解读失败，请稍后重试。");
+    if (job.message && job.message !== lastMessage) {
+      lastMessage = job.message;
+      setImportStatus(job.message, "working");
+    }
+    await wait(2_000);
+  }
+
+  throw new Error("这本书处理时间较长，任务已等待超过 10 分钟。请稍后重新尝试。 ");
+}
+
 async function generateImportedGuide() {
   const file = state.importFile;
   if (!file) return;
@@ -1428,8 +1453,9 @@ async function generateImportedGuide() {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "当前站点还没有启用书籍解读后端。");
+    const result = data.jobId ? await waitForImportJob(data.jobId) : data;
     setImportStatus("解读完成，正在整理阅读路线。", "success");
-    renderImportedGuide(data.guide);
+    renderImportedGuide(result.guide);
   } catch (error) {
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (["txt", "md"].includes(extension)) {
@@ -1437,10 +1463,10 @@ async function generateImportedGuide() {
       renderImportedGuide(preview);
       return;
     }
-    setImportStatus(
-      `${error.message || "生成失败。"} 当前 GitHub Pages 静态版不能处理完整书籍；部署 Node 后端并配置 Kimi、DeepSeek 或 OpenAI API 密钥后即可使用。`,
-      "error"
-    );
+    const staticHint = location.hostname.endsWith("github.io")
+      ? " 当前 GitHub Pages 是静态版，请使用知投的 Hugging Face 公网地址导入完整书籍。"
+      : "";
+    setImportStatus(`${error.message || "生成失败。"}${staticHint}`, "error");
   } finally {
     els.generateGuide.disabled = false;
     els.generateGuide.textContent = "开始生成通俗解读";

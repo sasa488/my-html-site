@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { randomUUID } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { extname, join, normalize } from "node:path";
@@ -41,6 +42,8 @@ const mimeTypes = new Map([
 
 const supportedBookExtensions = new Set([".pdf", ".doc", ".docx", ".txt", ".md", ".epub", ".mobi"]);
 const maxBookBytes = 20 * 1024 * 1024;
+const bookJobs = new Map();
+const bookJobTtlMs = 30 * 60 * 1000;
 
 const bookGuideSchema = {
   type: "object",
@@ -771,42 +774,14 @@ ${sourceMaterial}`;
   return guide;
 }
 
-async function handleImportBook(request, response) {
-  const rawBody = await readBody(request, Math.ceil(maxBookBytes * 1.4) + 200_000);
-  const body = rawBody ? JSON.parse(rawBody) : {};
-  const fileName = String(body.fileName || "").trim();
-  const mimeType = String(body.mimeType || "application/octet-stream");
-  const fileData = String(body.fileData || "");
-  const extension = extname(fileName).toLowerCase();
+function updateBookJob(jobId, patch) {
+  const current = bookJobs.get(jobId);
+  if (!current) return;
+  bookJobs.set(jobId, { ...current, ...patch, updatedAt: Date.now() });
+}
 
-  if (!fileName || !fileData.startsWith("data:")) {
-    json(response, 400, { error: "请选择一本要解读的书籍文件。" });
-    return;
-  }
-
-  if (!supportedBookExtensions.has(extension)) {
-    json(response, 400, { error: "目前支持 PDF、DOC、DOCX、TXT、Markdown、EPUB 和 MOBI 文件。" });
-    return;
-  }
-
-  if (estimateDataUrlBytes(fileData) > maxBookBytes) {
-    json(response, 413, { error: "文件不能超过 20MB。建议先拆分或压缩后再导入。" });
-    return;
-  }
-
-  const provider = currentAiProvider();
-  if (provider === "none") {
-    json(response, 503, {
-      code: "missing_api_key",
-      error: "当前站点还没有启用 AI 书籍解读服务。管理员需要配置 KIMI_API_KEY、DEEPSEEK_API_KEY 或 OPENAI_API_KEY。"
-    });
-    return;
-  }
-
-  const readingLevel = ["完全小白", "有一点基础", "进阶读者"].includes(body.readingLevel)
-    ? body.readingLevel
-    : "完全小白";
-  const userGoal = String(body.userGoal || "看懂整本书的主线和关键概念").slice(0, 300);
+async function processImportBookJob(jobId, input) {
+  const { provider, fileName, mimeType, fileData, extension, readingLevel, userGoal } = input;
   const prompt = `请阅读用户上传的金融或投资书籍，并生成“知投”章节式通俗解读。
 
 读者水平：${readingLevel}
@@ -825,10 +800,13 @@ async function handleImportBook(request, response) {
   try {
     let guide;
     if (provider === "kimi") {
+      updateBookJob(jobId, { status: "processing", stage: "extracting", message: "Kimi 正在解析文件和识别文字…" });
       const fileBuffer = dataUrlToBuffer(fileData);
       const text = await extractBookTextWithKimi(fileBuffer, fileName, mimeType);
+      updateBookJob(jobId, { stage: "generating", message: "已识别正文，正在梳理全书主线和章节…" });
       guide = await createTextBookGuide({ provider, fileName, text, readingLevel, userGoal });
     } else if (provider === "deepseek") {
+      updateBookJob(jobId, { status: "processing", stage: "extracting", message: "正在提取书籍正文…" });
       const fileBuffer = dataUrlToBuffer(fileData);
       if (![".pdf", ".docx", ".txt", ".md"].includes(extension)) {
         const error = new Error("这个格式需要使用 Kimi 文件解析。请配置 KIMI_API_KEY，或改用 PDF、DOCX、TXT、Markdown。");
@@ -836,8 +814,10 @@ async function handleImportBook(request, response) {
         throw error;
       }
       const text = await extractBookText(fileBuffer, extension);
+      updateBookJob(jobId, { stage: "generating", message: "已提取正文，正在梳理全书主线和章节…" });
       guide = await createTextBookGuide({ provider, fileName, text, readingLevel, userGoal });
     } else {
+      updateBookJob(jobId, { status: "processing", stage: "generating", message: "正在读取文件并生成章节式解读…" });
       const apiResponse = await fetch("https://api.openai.com/v1/responses", {
         method: "POST",
         headers: {
@@ -878,13 +858,90 @@ async function handleImportBook(request, response) {
       guide = assertBookGuide(parseJsonOutput(extractOutputText(await apiResponse.json())));
     }
 
-    json(response, 200, { guide, temporary: true, provider });
+    updateBookJob(jobId, {
+      status: "complete",
+      stage: "complete",
+      message: "解读完成。",
+      guide,
+      provider
+    });
   } catch (error) {
-    json(response, error?.statusCode || 502, {
-      error: error instanceof Error ? error.message : "书籍解读服务暂时不可用，请稍后重试。",
+    updateBookJob(jobId, {
+      status: "failed",
+      stage: "failed",
+      message: error instanceof Error ? error.message : "书籍解读失败，请稍后重试。",
       details: error?.details || ""
     });
   }
+}
+
+function handleBookJobStatus(response, jobId) {
+  const job = bookJobs.get(jobId);
+  if (!job) {
+    json(response, 404, { error: "没有找到这个任务，它可能已过期。请重新上传书籍。" });
+    return;
+  }
+  json(response, 200, job);
+}
+
+setInterval(() => {
+  const cutoff = Date.now() - bookJobTtlMs;
+  for (const [jobId, job] of bookJobs) {
+    if (job.updatedAt < cutoff) bookJobs.delete(jobId);
+  }
+}, 5 * 60 * 1000).unref();
+
+async function handleImportBook(request, response) {
+  const rawBody = await readBody(request, Math.ceil(maxBookBytes * 1.4) + 200_000);
+  const body = rawBody ? JSON.parse(rawBody) : {};
+  const fileName = String(body.fileName || "").trim();
+  const mimeType = String(body.mimeType || "application/octet-stream");
+  const fileData = String(body.fileData || "");
+  const extension = extname(fileName).toLowerCase();
+
+  if (!fileName || !fileData.startsWith("data:")) {
+    json(response, 400, { error: "请选择一本要解读的书籍文件。" });
+    return;
+  }
+
+  if (!supportedBookExtensions.has(extension)) {
+    json(response, 400, { error: "目前支持 PDF、DOC、DOCX、TXT、Markdown、EPUB 和 MOBI 文件。" });
+    return;
+  }
+
+  if (estimateDataUrlBytes(fileData) > maxBookBytes) {
+    json(response, 413, { error: "文件不能超过 20MB。建议先拆分或压缩后再导入。" });
+    return;
+  }
+
+  const provider = currentAiProvider();
+  if (provider === "none") {
+    json(response, 503, {
+      code: "missing_api_key",
+      error: "当前站点还没有启用 AI 书籍解读服务。管理员需要配置 KIMI_API_KEY、DEEPSEEK_API_KEY 或 OPENAI_API_KEY。"
+    });
+    return;
+  }
+
+  const readingLevel = ["完全小白", "有一点基础", "进阶读者"].includes(body.readingLevel)
+    ? body.readingLevel
+    : "完全小白";
+  const userGoal = String(body.userGoal || "看懂整本书的主线和关键概念").slice(0, 300);
+  const jobId = randomUUID();
+  const now = Date.now();
+  bookJobs.set(jobId, {
+    id: jobId,
+    status: "queued",
+    stage: "queued",
+    message: "文件已收到，正在准备解析…",
+    provider,
+    createdAt: now,
+    updatedAt: now
+  });
+  json(response, 202, { jobId, status: "queued", provider });
+  queueMicrotask(() =>
+    processImportBookJob(jobId, { provider, fileName, mimeType, fileData, extension, readingLevel, userGoal })
+  );
 }
 
 async function serveStatic(request, response) {
@@ -931,6 +988,12 @@ const server = createServer(async (request, response) => {
 
     if (request.method === "POST" && url.pathname === "/api/import-book") {
       await handleImportBook(request, response);
+      return;
+    }
+
+    const bookJobMatch = url.pathname.match(/^\/api\/import-book\/([a-f0-9-]+)$/);
+    if (request.method === "GET" && bookJobMatch) {
+      handleBookJobStatus(response, bookJobMatch[1]);
       return;
     }
 
