@@ -1331,10 +1331,11 @@ function renderImportedOverview(guide) {
 
 function renderImportedChapter(guide, chapter) {
   if (!chapter) return renderImportedOverview(guide);
+  const labels = getImportedChapterLabels(chapter);
   return `
     <section class="import-chapter-view">
-      <p class="eyebrow">${escapeHtml(chapter.sourceTitle || "章节")}</p>
-      <h3>${escapeHtml(chapter.plainTitle || chapter.sourceTitle || "本章解读")}</h3>
+      <p class="eyebrow">${escapeHtml(labels.eyebrow)}</p>
+      <h3>${escapeHtml(labels.title)}</h3>
       <p class="chapter-summary">${escapeHtml(chapter.summary || "")}</p>
       <div class="life-example"><span class="mini-label">生活里怎么理解</span><p>${escapeHtml(chapter.lifeExample || "")}</p></div>
       <div class="import-key-points">
@@ -1363,6 +1364,26 @@ function renderImportedChapter(guide, chapter) {
       <p class="source-note">来源定位：${escapeHtml(chapter.sourceNote || "文件章节未确认")}</p>
     </section>
   `;
+}
+
+function isIncompleteImportedTitle(value) {
+  const title = String(value || "").trim();
+  if (!title || title.length < 4) return true;
+  return /(?:[，、：:—-]|是被|是由|因为|所以|但是|不过|而且|以及|来自|取决于|意味着|由|被|把|让|在|对|从|向|为)$/.test(title);
+}
+
+function getImportedChapterLabels(chapter) {
+  const sourceTitle = String(chapter?.sourceTitle || "").trim();
+  const plainTitle = String(chapter?.plainTitle || "").trim();
+  const title = isIncompleteImportedTitle(plainTitle)
+    ? sourceTitle || plainTitle || "本章解读"
+    : plainTitle;
+
+  return {
+    title,
+    eyebrow: sourceTitle && sourceTitle !== title ? sourceTitle : "原书章节",
+    subtitle: sourceTitle && sourceTitle !== title ? sourceTitle : "用完整主线理解这一章"
+  };
 }
 
 function selectImportedChapter(chapterId) {
@@ -1397,7 +1418,10 @@ function renderImportedGuide(guide) {
   els.importChapters.innerHTML = `
     <button class="active" data-import-chapter="overview" type="button"><strong>全书地图</strong><small>先知道这本书要带你去哪</small></button>
     ${(guide.chapters || [])
-      .map((chapter, index) => `<button data-import-chapter="${escapeHtml(chapter.id)}" type="button"><span>${index + 1}</span><strong>${escapeHtml(chapter.plainTitle || chapter.sourceTitle)}</strong><small>${escapeHtml(chapter.sourceTitle || "")}</small></button>`)
+      .map((chapter, index) => {
+        const labels = getImportedChapterLabels(chapter);
+        return `<button data-import-chapter="${escapeHtml(chapter.id)}" type="button"><span>${index + 1}</span><strong>${escapeHtml(labels.title)}</strong><small>${escapeHtml(labels.subtitle)}</small></button>`;
+      })
       .join("")}
   `;
   els.importChapters.querySelectorAll("button").forEach((button) => {
