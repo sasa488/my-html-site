@@ -1437,10 +1437,26 @@ function wait(milliseconds) {
 async function waitForImportJob(jobId) {
   const deadline = Date.now() + 10 * 60 * 1000;
   let lastMessage = "";
+  let connectionFailures = 0;
 
   while (Date.now() < deadline) {
-    const response = await fetch(`/api/import-book/${encodeURIComponent(jobId)}`, { cache: "no-store" });
-    const job = await response.json().catch(() => ({}));
+    let response;
+    let job;
+    try {
+      response = await fetch(`/api/import-book/${encodeURIComponent(jobId)}`, { cache: "no-store" });
+      const body = await response.text();
+      job = body ? JSON.parse(body) : null;
+      if (!job || typeof job !== "object") throw new Error("进度响应为空");
+      connectionFailures = 0;
+    } catch {
+      connectionFailures += 1;
+      if (connectionFailures >= 5) {
+        throw new Error("与解读服务的连接多次中断，请保留文件并重新点击生成。");
+      }
+      setImportStatus(`连接短暂中断，正在自动恢复（${connectionFailures}/5）…`, "working");
+      await wait(2_000 * connectionFailures);
+      continue;
+    }
     if (!response.ok) throw new Error(job.error || "无法读取书籍处理进度。");
 
     if (job.status === "complete" && job.guide) return job;
@@ -1475,7 +1491,13 @@ async function generateImportedGuide() {
         userGoal: els.readingGoal.value.trim()
       })
     });
-    const data = await response.json().catch(() => ({}));
+    const responseBody = await response.text();
+    let data = {};
+    try {
+      data = responseBody ? JSON.parse(responseBody) : {};
+    } catch {
+      throw new Error("服务器返回内容不完整，请重新点击生成。");
+    }
     if (!response.ok) throw new Error(data.error || "当前站点还没有启用书籍解读后端。");
     const result = data.jobId ? await waitForImportJob(data.jobId) : data;
     setImportStatus("解读完成，正在整理阅读路线。", "success");
