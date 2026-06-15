@@ -252,31 +252,41 @@ function kimiBaseUrl() {
 }
 
 async function callKimi({ messages, jsonMode = false, maxTokens = 8_000 }) {
-  const apiResponse = await fetch(`${kimiBaseUrl()}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${kimiApiKey()}`
-    },
-    body: JSON.stringify({
-      model: process.env.KIMI_MODEL || "kimi-k2.6",
-      messages,
-      stream: false,
-      max_tokens: maxTokens,
-      thinking: { type: "disabled" },
-      ...(jsonMode ? { response_format: { type: "json_object" } } : {})
-    })
-  });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const apiResponse = await fetch(`${kimiBaseUrl()}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${kimiApiKey()}`
+      },
+      body: JSON.stringify({
+        model: process.env.KIMI_MODEL || "kimi-k2.6",
+        messages,
+        stream: false,
+        max_tokens: maxTokens,
+        thinking: { type: "disabled" },
+        ...(jsonMode ? { response_format: { type: "json_object" } } : {})
+      })
+    });
 
-  if (!apiResponse.ok) {
+    if (apiResponse.ok) {
+      const payload = await apiResponse.json();
+      return String(payload?.choices?.[0]?.message?.content || "").trim();
+    }
+
     const details = await apiResponse.text().catch(() => "");
+    const canRetry = attempt === 0 && [429, 500, 502, 503, 504].includes(apiResponse.status);
+    if (canRetry) {
+      await new Promise((resolve) => setTimeout(resolve, 1_500));
+      continue;
+    }
+
     const error = new Error(`Kimi 服务返回 ${apiResponse.status}。`);
     error.details = details.slice(0, 600);
     throw error;
   }
 
-  const payload = await apiResponse.json();
-  return String(payload?.choices?.[0]?.message?.content || "").trim();
+  throw new Error("Kimi 服务暂时不可用，请稍后重试。");
 }
 
 async function callDeepSeek({ messages, jsonMode = false, maxTokens = 8_000 }) {
@@ -813,9 +823,16 @@ async function processImportBookJob(jobId, input) {
   try {
     let guide;
     if (provider === "kimi") {
-      updateBookJob(jobId, { status: "processing", stage: "extracting", message: "Kimi 正在解析文件和识别文字…" });
       const fileBuffer = dataUrlToBuffer(fileData);
-      const text = await extractBookTextWithKimi(fileBuffer, fileName, mimeType);
+      const isPlainText = [".txt", ".md"].includes(extension);
+      updateBookJob(jobId, {
+        status: "processing",
+        stage: "extracting",
+        message: isPlainText ? "正在直接读取文字正文…" : "Kimi 正在解析文件和识别文字…"
+      });
+      const text = isPlainText
+        ? await extractBookText(fileBuffer, extension)
+        : await extractBookTextWithKimi(fileBuffer, fileName, mimeType);
       updateBookJob(jobId, { stage: "generating", message: "已识别正文，正在梳理全书主线和章节…" });
       guide = await createTextBookGuide({ provider, fileName, text, readingLevel, userGoal });
     } else if (provider === "deepseek") {
@@ -879,6 +896,13 @@ async function processImportBookJob(jobId, input) {
       provider
     });
   } catch (error) {
+    console.error("Book import failed", {
+      jobId,
+      fileName,
+      provider,
+      message: error instanceof Error ? error.message : "Unknown error",
+      details: error?.details || ""
+    });
     updateBookJob(jobId, {
       status: "failed",
       stage: "failed",

@@ -1482,15 +1482,16 @@ async function generateImportedGuide() {
     renderImportedGuide(result.guide);
   } catch (error) {
     const extension = file.name.split(".").pop()?.toLowerCase();
-    if (["txt", "md"].includes(extension)) {
+    const isStaticSite = location.hostname.endsWith("github.io");
+    if (isStaticSite && ["txt", "md"].includes(extension)) {
       const preview = await createLocalStructurePreview(file);
       renderImportedGuide(preview);
       return;
     }
-    const staticHint = location.hostname.endsWith("github.io")
+    const staticHint = isStaticSite
       ? " 当前 GitHub Pages 是静态版，请使用知投的 Hugging Face 公网地址导入完整书籍。"
       : "";
-    setImportStatus(`${error.message || "生成失败。"}${staticHint}`, "error");
+    setImportStatus(`完整解读失败：${error.message || "生成失败，请稍后重试。"}${staticHint}`, "error");
   } finally {
     els.generateGuide.disabled = false;
     els.generateGuide.textContent = "开始生成通俗解读";
