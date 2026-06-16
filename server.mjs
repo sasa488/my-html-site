@@ -43,7 +43,7 @@ const mimeTypes = new Map([
 const supportedBookExtensions = new Set([".pdf", ".doc", ".docx", ".txt", ".md", ".epub", ".mobi"]);
 const maxBookBytes = 20 * 1024 * 1024;
 const bookJobs = new Map();
-const bookJobTtlMs = 30 * 60 * 1000;
+const bookJobTtlMs = 2 * 60 * 60 * 1000;
 
 const bookGuideSchema = {
   type: "object",

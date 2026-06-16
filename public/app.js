@@ -1435,7 +1435,7 @@ function wait(milliseconds) {
 }
 
 async function waitForImportJob(jobId) {
-  const deadline = Date.now() + 10 * 60 * 1000;
+  const deadline = Date.now() + 60 * 60 * 1000;
   let lastMessage = "";
   let connectionFailures = 0;
 
@@ -1468,7 +1468,7 @@ async function waitForImportJob(jobId) {
     await wait(2_000);
   }
 
-  throw new Error("这本书处理时间较长，任务已等待超过 10 分钟。请稍后重新尝试。 ");
+  throw new Error("这本书处理时间超过 60 分钟。建议先拆分文件，或稍后重新导入。");
 }
 
 async function generateImportedGuide() {
@@ -1476,7 +1476,7 @@ async function generateImportedGuide() {
   if (!file) return;
   els.generateGuide.disabled = true;
   els.generateGuide.textContent = "正在阅读整本书…";
-  setImportStatus("正在识别目录和全书主线，较长的书可能需要一两分钟。", "working");
+  setImportStatus("正在识别目录和全书主线。长书会逐章生成，可能需要 15-30 分钟，请保持页面打开。", "working");
 
   try {
     const fileData = await fileToDataUrl(file);
