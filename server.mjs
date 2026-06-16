@@ -957,7 +957,7 @@ function assertBookGuide(guide) {
   if (!String(guide.book.title || "").trim() || !String(guide.overview.mainThesis || "").trim()) {
     invalidGuide("AI 返回的书名或全书主线为空。");
   }
-  if (!Array.isArray(guide.chapters) || guide.chapters.length < 4) {
+  if (!Array.isArray(guide.chapters) || guide.chapters.length < 2) {
     invalidGuide("AI 返回的章节结构不完整，请重新生成。");
   }
   guide.chapters = guide.chapters.slice(0, 12).map((chapter, index) => {
@@ -998,8 +998,8 @@ function assertBookOutline(outline) {
   if (!String(outline.book.title || "").trim() || !String(outline.overview.mainThesis || "").trim()) {
     invalidOutline("全书大纲缺少书名或主线。");
   }
-  if (!Array.isArray(outline.chapters) || outline.chapters.length < 4) {
-    invalidOutline("全书大纲章节不足。");
+  if (!Array.isArray(outline.chapters) || outline.chapters.length < 1) {
+    invalidOutline("全书大纲没有识别到可用章节。");
   }
   outline.chapters = outline.chapters.slice(0, 8).map((chapter, index) => {
     if (!chapter || typeof chapter !== "object") invalidOutline(`第 ${index + 1} 章大纲无效。`);
@@ -1015,6 +1015,29 @@ function assertBookOutline(outline) {
       sourceNote
     };
   });
+  if (outline.chapters.length === 1) {
+    const onlyChapter = outline.chapters[0];
+    outline.chapters = [
+      {
+        ...onlyChapter,
+        id: "chapter-1",
+        sourceTitle: onlyChapter.sourceTitle || "全书主线",
+        plainTitle: "先理解这本资料在解决什么问题",
+        summary: onlyChapter.summary || "先抓住全书主题、背景和作者想回答的问题。"
+      },
+      {
+        id: "chapter-2",
+        sourceTitle: "关键概念与应用提醒",
+        plainTitle: "再看关键概念、应用场景和常见误区",
+        summary: `围绕“${onlyChapter.plainTitle || onlyChapter.sourceTitle}”提炼关键概念、现实应用和容易误解的地方。`,
+        sourceNote: onlyChapter.sourceNote || onlyChapter.sourceTitle || "系统根据全书大纲拆分"
+      }
+    ];
+    outline.quality.warnings = [
+      "原文件目录结构较少，系统已按学习任务自动拆成两章。",
+      ...(Array.isArray(outline.quality.warnings) ? outline.quality.warnings : [])
+    ];
+  }
   outline.overview.beforeReading = compactStringArray(outline.overview.beforeReading, 3, 90);
   outline.overview.readingPath = compactStringArray(outline.overview.readingPath, 8, 80);
   outline.closing.whatChanged = compactStringArray(outline.closing.whatChanged, 3, 90);
@@ -1075,7 +1098,7 @@ async function createBookOutline({ provider, fileName, sourceMaterial, readingLe
 
 要求：
 1. 只做全书主线、阅读顺序和章节大纲，不写章节长解读。
-2. 组织 4-8 个有先后关系的章节。
+2. 组织 2-8 个有先后关系的章节；如果原文很短或目录不清晰，也可以拆成“全书主线”和“关键概念/应用提醒”两章。
 3. 每个章节只写 sourceTitle、plainTitle、summary、sourceNote，summary 不超过 80 个中文字符。
 4. 不提供投资建议，不复制长段原文。
 5. JSON 必须符合 schema，不要输出 Markdown：
@@ -1095,7 +1118,7 @@ ${sourceMaterial}`;
       { role: "user", content: prompt }
     ],
     validate: assertBookOutline,
-    compactInstruction: "上一次大纲不完整。请重新生成合法 JSON：4-6 章，每个字段简短，不要输出章节长解读。"
+    compactInstruction: "上一次大纲不完整。请重新生成合法 JSON：至少 2 章、最多 6 章；短文件可拆成“全书主线”和“关键概念/应用提醒”；每个字段简短，不要输出章节长解读。"
   });
 }
 
