@@ -3,17 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>知投 - 金融经典知识库</title>
-    <meta name="description" content="投资经典书籍的结构化知识点、检索与 AI 问答。" />
+    <title>知投 - 金融研究知识库</title>
+    <meta name="description" content="面向金融学习、研究沉淀和观点复用的专业知识库。" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="app-shell">
       <section class="topbar" aria-label="产品概览">
         <div>
-          <p class="eyebrow">Read to Invest</p>
-          <h1>知投</h1>
-          <p class="subtitle">投资经典书籍的结构化知识点、检索与 AI 问答。</p>
+          <p class="eyebrow">Research Knowledge Workspace</p>
+          <h1>知投金融研究库</h1>
+          <p class="subtitle">围绕经典书籍、研究观点、术语解释和引用来源沉淀可检索、可复用的金融知识。</p>
         </div>
         <div class="stats" aria-label="知识库统计">
           <span><strong id="book-count">0</strong> 本经典</span>
@@ -28,25 +28,25 @@
       <section class="control-strip" aria-label="搜索与主题筛选">
         <label class="searchbox">
           <span aria-hidden="true">⌕</span>
-          <input id="search-input" placeholder="搜索书名、作者、概念、标签..." aria-label="搜索知识库" />
+          <input id="search-input" placeholder="搜索书籍、作者、主题、术语、观点、引用来源..." aria-label="搜索知识库" />
         </label>
         <div id="theme-tabs" class="theme-tabs" role="tablist" aria-label="主题"></div>
         <div class="control-actions">
-          <button id="intro-open" class="intro-open" type="button">金融世界入门</button>
-          <button id="import-open" class="import-open" type="button">导入一本书</button>
+          <button id="intro-open" class="intro-open" type="button">基础知识导览</button>
+          <button id="import-open" class="import-open" type="button">导入研究资料</button>
         </div>
       </section>
 
       <section class="workspace-grid">
-        <aside class="panel library-panel" aria-label="书籍知识库">
+        <aside class="panel library-panel" aria-label="研究书库">
           <div class="panel-title">
             <span aria-hidden="true">▣</span>
-            <h2>书籍知识库</h2>
+            <h2>研究书库</h2>
           </div>
           <div id="book-list" class="book-list"></div>
         </aside>
 
-        <section class="panel main-panel" aria-label="知识点卡片">
+        <section class="panel main-panel" aria-label="研究阅读区">
           <div id="book-hero" class="book-hero"></div>
           <div class="point-layout">
             <div id="point-list" class="point-list" aria-label="知识点列表"></div>
@@ -54,28 +54,28 @@
           </div>
         </section>
 
-        <aside class="panel ask-panel" aria-label="AI 智能问答">
+        <aside class="panel ask-panel" aria-label="知识库问答">
           <div class="panel-title">
             <span aria-hidden="true">✦</span>
-            <h2>AI 智能问答</h2>
+            <h2>知识库问答</h2>
           </div>
-          <textarea id="question-input" aria-label="输入问题">什么是安全边际？</textarea>
+          <textarea id="question-input" aria-label="输入问题">基于知识库解释：什么是安全边际？</textarea>
           <button id="ask-button" class="ask-button" type="button">
             <span aria-hidden="true">✧</span>
-            <span>基于知识库回答</span>
+            <span>检索并回答</span>
           </button>
           <div id="answer-box" class="answer-box hidden"></div>
           <div id="citations" class="citations"></div>
           <div class="notice">
             <span aria-hidden="true">!</span>
-            <p>仅供学习参考，不构成投资建议。AI 回答只能解释知识库内容，不应作为买卖依据。</p>
+            <p>仅供研究与学习参考，不构成投资建议。回答应基于知识库来源，不作为买卖依据。</p>
           </div>
         </aside>
       </section>
 
       <footer class="risk-footer">
         <span aria-hidden="true">!</span>
-        <span>免责声明：本知识库不提供个股推荐、收益承诺、仓位建议或市场预测。</span>
+        <span>免责声明：本知识库用于学习、研究与资料整理，不提供个股推荐、收益承诺、仓位建议或市场预测。</span>
       </footer>
     </main>
 

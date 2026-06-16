@@ -1641,7 +1641,7 @@ async function ask() {
     renderAskResult(localAsk(question));
   } finally {
     els.askButton.disabled = false;
-    els.askButton.querySelector("span:last-child").textContent = "基于知识库回答";
+    els.askButton.querySelector("span:last-child").textContent = "检索并回答";
   }
 }
 
