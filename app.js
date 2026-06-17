@@ -965,11 +965,52 @@ function renderPoints() {
   els.pointDetail.querySelector('[data-action="ask"]')?.addEventListener("click", () => askAboutPoint(selectedPoint));
 }
 
-function render() {
-  els.bookCount.textContent = state.books.length;
-  els.pointCount.textContent = state.knowledgePoints.length;
+function importedGuidesForStats() {
+  const guides = [];
+  const seen = new Set();
+  for (const item of loadImportShelf()) {
+    if (!item?.guide) continue;
+    const key = item.guide.book?.title || item.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    guides.push(item.guide);
+  }
+  if (state.importedGuide) {
+    const key = state.importedGuide.book?.title || "current-imported-guide";
+    if (!seen.has(key)) guides.push(state.importedGuide);
+  }
+  return guides;
+}
+
+function importedKnowledgeCount(guide) {
+  const chapters = Array.isArray(guide?.chapters) ? guide.chapters : [];
+  const keyPointCount = chapters.reduce(
+    (total, chapter) => total + (Array.isArray(chapter.keyPoints) ? chapter.keyPoints.length : 0),
+    0
+  );
+  return keyPointCount || chapters.length;
+}
+
+function renderStats() {
+  const importedGuides = importedGuidesForStats();
+  const importedBookCount = importedGuides.length;
+  const importedPointCount = importedGuides.reduce((total, guide) => total + importedKnowledgeCount(guide), 0);
+  const totalBooks = state.books.length + importedBookCount;
+  const totalPoints = state.knowledgePoints.length + importedPointCount;
+
+  els.bookCount.textContent = totalBooks;
+  els.pointCount.textContent = totalPoints;
   els.themeCount.textContent = state.themes.length;
   els.masteredCount.textContent = `${state.masteredIds.size}/${state.knowledgePoints.length}`;
+  els.bookCount.title = importedBookCount ? `内置 ${state.books.length} 本，已导入 ${importedBookCount} 本` : `内置 ${state.books.length} 本`;
+  els.pointCount.title = importedPointCount
+    ? `内置 ${state.knowledgePoints.length} 个，导入解读 ${importedPointCount} 个`
+    : `内置 ${state.knowledgePoints.length} 个`;
+  els.masteredCount.title = "已掌握统计目前只计算内置经典知识点。";
+}
+
+function render() {
+  renderStats();
   renderThemes();
   renderBooks();
   renderBookHero();
@@ -1428,6 +1469,7 @@ function renderImportedGuide(guide) {
     button.addEventListener("click", () => selectImportedChapter(button.dataset.importChapter));
   });
   selectImportedChapter("overview");
+  renderStats();
 }
 
 function wait(milliseconds) {
@@ -1572,6 +1614,7 @@ function renderImportShelf() {
     button.addEventListener("click", () => {
       writeImportShelf(loadImportShelf().filter((item) => item.id !== button.dataset.shelfRemove));
       renderImportShelf();
+      renderStats();
     });
   });
 }
@@ -1585,6 +1628,8 @@ function saveImportedGuide() {
   try {
     writeImportShelf([{ id, savedAt: new Date().toISOString(), guide }, ...existing]);
     els.saveGuide.textContent = "已保存到本机书架";
+    renderImportShelf();
+    renderStats();
   } catch {
     els.saveGuide.textContent = "保存失败，请下载 JSON";
   }
