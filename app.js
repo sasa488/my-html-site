@@ -59,21 +59,50 @@ const els = {
 
 const marketIntroSteps = [
   {
-    title: "1. 你买的不是代码，是资产",
-    body: "股票可以先理解成“拥有一小块公司”；基金和指数可以先理解成“一篮子公司”。屏幕上跳动的是价格，背后真正重要的是资产能不能长期创造价值。"
+    title: "1. 金融市场到底在交易什么",
+    body: "你看到的是股票代码、基金净值和价格曲线，本质上交易的是资产、现金流、风险和对未来的预期。先记住：屏幕上的数字只是入口，背后才是真正要理解的东西。"
   },
   {
-    title: "2. 市场每天报价，但不等于每天审判",
-    body: "价格会上下波动，有时是信息变化，有时只是大家情绪变化。新手先练习一件事：把“今天涨跌”跟“这个东西到底好不好”分开看。"
+    title: "2. 股票、基金、债券先怎么区分",
+    body: "股票像拥有一小块公司，基金像把钱交给一篮子资产，债券像别人向你借钱并承诺还本付息。它们不是谁一定更高级，而是风险来源、收益方式和适合的人不同。"
   },
   {
-    title: "3. 风险不是吓人的词，是不确定性",
-    body: "投资没有“稳赚剧本”。风险包括买贵了、看错了、急用钱、跟风上头、承受不了下跌。先知道自己能承受什么，再谈适合读哪类书。"
+    title: "3. 价格为什么每天会动",
+    body: "价格会受公司变化、利率、政策、资金情绪和市场预期影响。有时价格动，是事情真的变了；有时只是大家突然乐观或害怕。新手先练习把“价格变化”和“价值变化”分开。"
   },
   {
-    title: "4. 经典书不是让你背黑话",
-    body: "安全边际、护城河、有效市场这些词，本质都是生活问题：贵不贵、靠不靠谱、能不能坚持。知投会先把它们翻成白话，再带你回到书。"
+    title: "4. 风险不是亏钱两个字",
+    body: "风险包括买贵了、看错了、太集中、借钱投资、急用钱、情绪崩溃、听故事上头。真正重要的不是完全没有风险，而是知道自己承担了什么风险。"
+  },
+  {
+    title: "5. 收益来自哪里",
+    body: "长期收益通常来自企业赚钱、资产生息、估值变化和时间复利。短期价格也可能涨，但如果你说不清收益从哪里来，就很容易把运气当能力。"
+  },
+  {
+    title: "6. 经典书在帮你建立什么",
+    body: "经典书不是让你背安全边际、护城河、有效市场这些黑话，而是帮你回答生活化问题：贵不贵、靠不靠谱、能不能长期拿住、遇到波动该不该改变判断。"
   }
+];
+
+const marketIntroMap = [
+  { label: "资产", text: "你真正买到的东西，比如公司股权、一篮子基金、债券或现金类工具。" },
+  { label: "价格", text: "市场今天愿意用多少钱交易它，受信息、情绪和资金影响。" },
+  { label: "价值", text: "这个资产长期能创造多少现金流、自由度或保护力。" },
+  { label: "风险", text: "未来不按你想象发生的可能性，包括亏损、波动和无法坚持。" },
+  { label: "时间", text: "复利和错误都会被时间放大，所以越长期越需要纪律。" }
+];
+
+const marketIntroPitfalls = [
+  "先问“买什么能赚”，却没问“为什么会赚”。",
+  "把短期上涨当成自己看懂了，把短期下跌当成市场惩罚自己。",
+  "只看别人赚了多少，不看别人承担了多大波动和回撤。",
+  "听到一个专业词就觉得很高级，但说不出它解决什么现实问题。"
+];
+
+const marketIntroPath = [
+  "先懂市场：资产、价格、价值、风险、时间。",
+  "再懂自己：能承受多大波动、愿意花多少时间、容易在哪些地方冲动。",
+  "最后选书：用测试结果进入适合自己的学习路线。"
 ];
 
 const quizQuestions = [
@@ -1224,8 +1253,23 @@ function renderIntro() {
     <section class="intro-panel-content" aria-label="金融市场小白先修课">
       <div class="intro-lead">
         <span class="mini-label">完全小白先看这里</span>
-        <h3>不用先懂股票术语，先建立 4 个最小概念</h3>
-        <p>看完这一步，再做测试就不会像在答专业考试。你只需要先知道：市场里交易的是资产，价格会波动，风险来自不确定性，经典书是在帮你建立判断框架。</p>
+        <h3>先用一张地图看懂金融世界，再做测试</h3>
+        <p>你不需要一开始就懂财报、估值模型或宏观周期。先抓住五个词：资产、价格、价值、风险、时间。后面的经典书，基本都在围绕这五件事展开。</p>
+      </div>
+      <div class="intro-map" aria-label="金融世界五个基本词">
+        ${marketIntroMap
+          .map(
+            (item, index) => `
+              <article>
+                <strong>${index + 1}</strong>
+                <div>
+                  <h4>${escapeHtml(item.label)}</h4>
+                  <p>${escapeHtml(item.text)}</p>
+                </div>
+              </article>
+            `
+          )
+          .join("")}
       </div>
       <div class="intro-steps">
         ${marketIntroSteps
@@ -1239,8 +1283,20 @@ function renderIntro() {
           )
           .join("")}
       </div>
+      <div class="intro-bottom-grid">
+        <section class="intro-pitfalls" aria-label="新手常见误区">
+          <span class="mini-label">先别急着做这些</span>
+          <h4>新手最容易踩的 4 个坑</h4>
+          <ul>${marketIntroPitfalls.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        </section>
+        <section class="intro-path" aria-label="学习路线">
+          <span class="mini-label">接下来怎么学</span>
+          <h4>从小白到能读经典的三步</h4>
+          <ol>${marketIntroPath.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>
+        </section>
+      </div>
       <div class="intro-actions">
-        <button class="intro-start" data-intro-action="start" type="button">我大概懂了，开始测试</button>
+        <button class="intro-start" data-intro-action="start" type="button">看懂这张地图，开始测试</button>
         <button class="intro-skip" data-intro-action="start" type="button">我已经懂一点，直接测</button>
         <button class="intro-close" data-intro-action="close" type="button">先逛逛网站</button>
       </div>

@@ -871,7 +871,10 @@ dd {
 .chapter-checkpoint,
 .guide-warning,
 .import-privacy,
-.intro-lead {
+.intro-lead,
+.intro-map article,
+.intro-pitfalls,
+.intro-path {
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
   background: #fcfcfd;
@@ -884,7 +887,10 @@ dd {
 .chapter-checkpoint p,
 .guide-warning p,
 .intro-lead p,
-.intro-steps p {
+.intro-steps p,
+.intro-map p,
+.intro-pitfalls li,
+.intro-path li {
   color: var(--ink-soft);
   line-height: 1.68;
   margin-bottom: 0;
@@ -1699,9 +1705,44 @@ dd {
   font-size: 21px;
 }
 
+.intro-map {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.intro-map article {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+  min-height: 128px;
+}
+
+.intro-map strong {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #eef6f3;
+  color: var(--green-dark);
+  font-size: 13px;
+}
+
+.intro-map h4,
+.intro-pitfalls h4,
+.intro-path h4 {
+  margin: 0 0 7px;
+  font-size: 15px;
+}
+
+.intro-map p {
+  font-size: 12px;
+}
+
 .intro-steps {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -1714,12 +1755,35 @@ dd {
 }
 
 .intro-steps article {
-  min-height: 146px;
+  min-height: 164px;
 }
 
 .intro-steps h4 {
   margin: 0 0 8px;
   font-size: 16px;
+}
+
+.intro-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 12px;
+}
+
+.intro-pitfalls {
+  border-left: 3px solid #d5b26b;
+  background: #fffdf7;
+}
+
+.intro-path {
+  background: #f7f9fc;
+}
+
+.intro-pitfalls ul,
+.intro-path ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
 }
 
 .intro-actions {
@@ -1802,6 +1866,14 @@ dd {
     grid-column: 1 / -1;
     position: static;
   }
+
+  .intro-map {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .intro-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -1820,7 +1892,9 @@ dd {
   .import-overview-grid,
   .import-preferences,
   .import-key-points dl,
-  .insight-grid {
+  .insight-grid,
+  .intro-map,
+  .intro-bottom-grid {
     grid-template-columns: 1fr;
   }
 
