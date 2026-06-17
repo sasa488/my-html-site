@@ -241,6 +241,136 @@ const themeChecks = {
   psychology: "这套做法在压力很大时，我还能坚持吗？"
 };
 
+const insightPatterns = [
+  {
+    terms: ["安全边际"],
+    question: "为什么高手买东西总想留点余地？",
+    takeaway: "安全边际不是悲观，而是承认自己可能看错，所以先给错误留缓冲。",
+    turn: "最危险的不是买贵一次，而是你没有意识到自己一点犯错空间都没有。",
+    reflection: "如果估值、增长、情绪里有一个判断错了，这笔投资还扛得住吗？"
+  },
+  {
+    terms: ["内在价值", "估值"],
+    question: "一家公司到底“值多少钱”，为什么不是股价说了算？",
+    takeaway: "股价是别人今天愿意出的价，价值是你对这门生意长期能力的估算。",
+    turn: "好公司也可能是差投资，关键在于你付出的价格有没有把好消息全算进去了。",
+    reflection: "我现在是在研究这门生意，还是只是在给股价涨跌找理由？"
+  },
+  {
+    terms: ["市场先生"],
+    question: "市场每天报价，你为什么不用每天接招？",
+    takeaway: "市场情绪会变，但你不必把每一次报价都当成命令。",
+    turn: "真正的自由不是预测市场情绪，而是知道什么时候可以不理它。",
+    reflection: "如果今天没有价格波动，我对这家公司或资产的判断会改变吗？"
+  },
+  {
+    terms: ["护城河"],
+    question: "一家好公司凭什么不被别人轻易抢走生意？",
+    takeaway: "护城河不是名气大，而是竞争者很难复制、客户很难离开的优势。",
+    turn: "最容易误判的护城河，是把“现在很火”当成“长期很难被替代”。",
+    reflection: "如果竞争者明天降价或模仿，它还能守住客户和利润吗？"
+  },
+  {
+    terms: ["资本配置", "现金流"],
+    question: "公司赚到钱以后怎么花，为什么这么重要？",
+    takeaway: "赚钱只是第一步，把钱继续花对，才可能让企业长期变强。",
+    turn: "利润表漂亮不等于股东会变富，钱花错了也会把好生意拖慢。",
+    reflection: "管理层是在扩大长期价值，还是只是在追求短期好看？"
+  },
+  {
+    terms: ["有效市场", "分散", "指数"],
+    question: "如果市场里聪明人很多，普通人还怎么参与？",
+    takeaway: "承认自己不总能赢过市场，反而能把注意力放到成本、分散和长期纪律上。",
+    turn: "普通人的优势未必是更聪明，而是少折腾、少付费、少犯大错。",
+    reflection: "我是在做长期配置，还是想用指数包装一次短期判断？"
+  },
+  {
+    terms: ["择时", "再平衡"],
+    question: "为什么“等一个完美买点”常常会变成拖延？",
+    takeaway: "择时要求你同时猜对方向和时间，再平衡则是把组合拉回原计划。",
+    turn: "纪律不是让你少赚钱，而是防止情绪把计划改到面目全非。",
+    reflection: "如果市场继续涨或继续跌，我的规则还会一样吗？"
+  },
+  {
+    terms: ["趋势", "支撑", "阻力", "成交量"],
+    question: "图表能告诉你市场脚步，但它能告诉你未来吗？",
+    takeaway: "技术分析更像观察人群行为，不是拥有预测未来的答案。",
+    turn: "最重要的不是信号多准，而是信号失败时你会不会承认。",
+    reflection: "这次判断如果错了，我在哪里退出，损失有多大？"
+  },
+  {
+    terms: ["信用周期", "风险偏好", "周期"],
+    question: "为什么大家越兴奋时，风险反而可能越高？",
+    takeaway: "周期不是钟表，但市场温度会影响价格里装进了多少乐观。",
+    turn: "风险常常不是在坏消息最多时出现，而是在大家觉得不会出事时累积。",
+    reflection: "我看到的是基本面改善，还是市场愿意冒险的程度提高了？"
+  },
+  {
+    terms: ["确认偏误", "损失厌恶", "锚定", "基准率"],
+    question: "为什么投资里最难管理的，常常是自己的大脑？",
+    takeaway: "很多错误不是因为不懂概念，而是因为情绪和偏见悄悄替你做决定。",
+    turn: "研究越久不一定越客观，有时只是把自己原来的观点包装得更完整。",
+    reflection: "我有没有认真写过一段反方观点？"
+  },
+  {
+    terms: ["回测", "过拟合", "因子"],
+    question: "把投资想法写成规则后，真的就更靠谱吗？",
+    takeaway: "规则能让想法可复查，但历史数据不等于未来环境。",
+    turn: "回测越漂亮，越要警惕它是不是只是在讨好过去。",
+    reflection: "这个规则离开过去那段市场，还能讲得通吗？"
+  },
+  {
+    terms: ["复利", "尾部事件", "能力圈", "回撤"],
+    question: "长期投资为什么最怕一次把自己打出局？",
+    takeaway: "复利需要留在游戏里，能力圈和余量都是为了减少不可恢复的错误。",
+    turn: "长期主义不是硬扛一切，而是避免让一次判断毁掉后面的时间。",
+    reflection: "这件事如果出错，会只是难受，还是会让我出局？"
+  }
+];
+
+const themeInsightFallbacks = {
+  value: {
+    question: "这张卡在帮你避免哪种“买贵了还不知道”？",
+    turn: "价值投资最反直觉的地方，是先保护下限，再谈上限。",
+    reflection: "我有没有把价格、价值和犯错空间分开写清楚？"
+  },
+  growth: {
+    question: "这张卡怎么帮你分清真成长和好故事？",
+    turn: "成长最迷人的时候，也最容易把希望当成事实。",
+    reflection: "增长来自真实需求、竞争优势，还是只来自一段动听叙事？"
+  },
+  index: {
+    question: "这张卡为什么适合不想天天盯盘的人？",
+    turn: "越简单的方法，越考验你能不能长期不乱改。",
+    reflection: "我是在建立长期系统，还是在寻找一个看起来稳妥的短期答案？"
+  },
+  technical: {
+    question: "这张卡在提醒你怎样观察市场行为？",
+    turn: "图表给的是线索，不是保证；真正重要的是失败预案。",
+    reflection: "如果市场没有按我想的走，我的下一步是什么？"
+  },
+  macro: {
+    question: "这张卡怎么帮你看懂市场所处的“天气”？",
+    turn: "宏观不是用来精确算命，而是帮你知道现在顺风还是逆风。",
+    reflection: "我是在判断环境，还是在假装知道未来日期？"
+  },
+  behavior: {
+    question: "这张卡在提醒你避开哪种大脑陷阱？",
+    turn: "投资里很多亏损，开始于一个听起来很合理的自我解释。",
+    reflection: "我有没有主动寻找让自己不舒服的证据？"
+  },
+  quant: {
+    question: "这张卡怎么把感觉变成可复查的规则？",
+    turn: "规则不是越复杂越高级，能解释、能执行、能承认失效才重要。",
+    reflection: "这个规则的边界条件是什么？"
+  },
+  psychology: {
+    question: "这张卡为什么关乎长期能不能坚持？",
+    turn: "真正的长期，不是每天喊长期，而是在压力下还有余量。",
+    reflection: "这套做法在情绪很差、市场很吵时，我还能执行吗？"
+  }
+};
+
 const bookGuides = {
   "intelligent-investor": {
     question: "市场每天给你一个价格，你怎么不被它牵着走？",
@@ -452,6 +582,29 @@ function guideForBook(book) {
 function conceptTranslationForPoint(point) {
   const haystack = [point.title, point.explanation, point.application, point.misconception, point.tags.join(" ")].join(" ");
   return conceptTranslations.find((entry) => entry.terms.some((term) => haystack.includes(term)))?.text || "";
+}
+
+function insightPatternForPoint(point) {
+  const haystack = [point.title, point.explanation, point.application, point.misconception, point.tags.join(" ")].join(" ");
+  return insightPatterns.find((entry) => entry.terms.some((term) => haystack.includes(term)));
+}
+
+function insightForPoint(point, section) {
+  const pattern = insightPatternForPoint(point);
+  const fallback = themeInsightFallbacks[point.themeId] || themeInsightFallbacks.value;
+  const translation = conceptTranslationForPoint(point);
+  const sourceBook = point.sourceBook || bookById(point.bookId)?.title || "来源书籍";
+  const sectionName = section?.plainTitle || section?.title || point.sourceNote || "当前章节";
+
+  return {
+    question: pattern?.question || fallback.question || `${point.title}真正想提醒你什么？`,
+    takeaway: pattern?.takeaway || translation || point.explanation,
+    analogy: themeAnalogies[point.themeId] || "把抽象概念换成生活问题，会更容易判断自己是否真的理解。",
+    bookRole: `在《${sourceBook}》里，这张卡属于“${sectionName}”这条线索：${point.explanation}`,
+    turn: pattern?.turn || fallback.turn || point.misconception,
+    reflection: pattern?.reflection || fallback.reflection || themeChecks[point.themeId] || "我能不能用自己的话解释它，并说出一个反例？",
+    sourceLine: `${sourceBook}｜${point.sourceNote}`
+  };
 }
 
 function pointById(id) {
@@ -886,7 +1039,7 @@ function renderPoints() {
   const selectedPoint = pointById(state.selectedPointId) || displayPoints[0];
   if (!selectedPoint) return;
   const isMastered = state.masteredIds.has(selectedPoint.id);
-  const conceptTranslation = conceptTranslationForPoint(selectedPoint);
+  const insight = insightForPoint(selectedPoint, selectedSection);
   const deepGuide = bookDeepGuides[currentBook.id];
   els.pointDetail.innerHTML = `
     <section class="section-detail" aria-label="当前章节">
@@ -902,34 +1055,60 @@ function renderPoints() {
       </div>
       <div class="section-cards" aria-label="本章知识点">
         ${displayPoints
-          .map(
-            (point) => `
+          .map((point, index) => {
+            const cardInsight = insightForPoint(point, selectedSection);
+            return `
               <button class="section-point-card ${state.selectedPointId === point.id ? "selected" : ""} ${state.masteredIds.has(point.id) ? "mastered" : ""}" data-point="${escapeHtml(point.id)}" type="button">
-                <span>${state.masteredIds.has(point.id) ? "✓ " : ""}${escapeHtml(conceptTranslationForPoint(point) || point.title)}</span>
-                <small>${escapeHtml(point.title)}｜${escapeHtml(point.tags.slice(0, 2).join(" / "))}</small>
+                <small>洞察 ${index + 1}｜${escapeHtml(point.title)}</small>
+                <span>${state.masteredIds.has(point.id) ? "✓ " : ""}${escapeHtml(cardInsight.question)}</span>
               </button>
-            `
-          )
+            `;
+          })
           .join("")}
       </div>
     </section>
 
-    <article class="knowledge-detail-card" aria-label="知识点解释">
-      <div class="detail-heading">
-        <span aria-hidden="true">▤</span>
+    <article class="knowledge-detail-card insight-card" aria-label="洞察卡">
+      <div class="detail-heading insight-heading">
+        <span class="insight-badge" aria-hidden="true">INSIGHT</span>
         <div>
-          <span class="mini-label">本章知识点</span>
-          <h3>${escapeHtml(selectedPoint.title)}</h3>
-          ${conceptTranslation ? `<p class="concept-translation">小白翻译：${escapeHtml(conceptTranslation)}</p>` : ""}
-          <p>${escapeHtml(selectedPoint.sourceBook)}｜${escapeHtml(selectedPoint.sourceNote)}</p>
+          <span class="mini-label">本章洞察</span>
+          <h3>${escapeHtml(insight.question)}</h3>
+          <p>${escapeHtml(insight.sourceLine)}</p>
         </div>
       </div>
-      ${renderBeginnerBlock(selectedPoint)}
-      <dl>
-        <div><dt>这句话在讲什么</dt><dd>${renderWithTerms(selectedPoint.explanation)}</dd></div>
-        <div><dt>什么时候会用到</dt><dd>${renderWithTerms(selectedPoint.application)}</dd></div>
+
+      <section class="insight-takeaway" aria-label="一句话带走">
+        <span class="mini-label">一句话带走</span>
+        <p>${renderWithTerms(insight.takeaway)}</p>
+      </section>
+
+      <div class="insight-grid">
+        <section>
+          <span class="mini-label">生活里的同款场景</span>
+          <p>${escapeHtml(insight.analogy)}</p>
+        </section>
+        <section>
+          <span class="mini-label">书里真正提醒你</span>
+          <p>${renderWithTerms(insight.bookRole)}</p>
+        </section>
+      </div>
+
+      <section class="insight-turn" aria-label="反直觉提醒">
+        <span class="mini-label">一个反直觉提醒</span>
+        <p>${renderWithTerms(insight.turn)}</p>
+      </section>
+
+      <dl class="insight-dl">
+        <div><dt>什么时候有用</dt><dd>${renderWithTerms(selectedPoint.application)}</dd></div>
         <div><dt>新手最容易误会</dt><dd>${renderWithTerms(selectedPoint.misconception)}</dd></div>
       </dl>
+
+      <section class="reflection-card" aria-label="看完问自己">
+        <span class="mini-label">看完问自己</span>
+        <p>${escapeHtml(insight.reflection)}</p>
+      </section>
+
       ${renderGlossary(selectedPoint)}
       <div class="tag-row">${selectedPoint.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
       <div class="card-actions">
