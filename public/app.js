@@ -400,6 +400,236 @@ const themeInsightFallbacks = {
   }
 };
 
+const narrativePatterns = [
+  {
+    terms: ["安全边际"],
+    caseTitle: "一家好公司跌下来了，你敢买吗？",
+    story:
+      "想象你研究了一家公司，生意确实不错，价格也从高点跌了不少。朋友说“已经便宜了”，你也有点心动。但格雷厄姆会先问：跌下来只是变便宜，还是已经便宜到足够保护你看错？",
+    tension: "真正的难点不是发现它比之前便宜，而是判断现在的价格有没有给错误、坏消息和情绪波动留下余地。",
+    argument: [
+      "先把“好公司”和“好价格”分开，避免因为喜欢一家公司就忽略价格。",
+      "再承认估值一定会有误差，所以买入价必须低于保守价值，而不是刚好等于你算出来的价值。",
+      "最后把安全边际当成防守工具：它不保证赚钱，但能减少一次判断错误造成的伤害。"
+    ],
+    decision: "如果这笔投资只有在所有好消息都兑现时才成立，它就不是安全边际，而是乐观假设。",
+    observation: "看估值假设是否保守、坏情况会怎样、价格是否已经反映足够悲观。"
+  },
+  {
+    terms: ["内在价值", "估值"],
+    caseTitle: "股价涨了很多，它就真的更值钱了吗？",
+    story:
+      "同一家公司，昨天市场愿意出 80 元，今天愿意出 120 元。它的工厂、客户、管理层可能没有一夜之间变化这么大。投资书想让你停下来想：到底是价值变了，还是报价变了？",
+    tension: "市场价格每天都在动，但企业长期能创造多少钱不会每分钟重写一次。",
+    argument: [
+      "先把股价看成报价，而不是结论。",
+      "再用商业模式、现金流、竞争优势和成长空间估一个大致价值区间。",
+      "最后比较价格和价值：不是为了算出一个神奇数字，而是判断自己有没有买贵。"
+    ],
+    decision: "当价格已经把未来好消息提前算满时，哪怕公司很好，投资结果也可能普通。",
+    observation: "看收入质量、现金流、利润率、增长假设和估值倍数是不是互相支撑。"
+  },
+  {
+    terms: ["市场先生"],
+    caseTitle: "市场今天情绪崩了，你要跟着崩吗？",
+    story:
+      "有个人每天敲门给你的资产报价。今天他兴奋到离谱，明天又悲观到想低价甩卖。格雷厄姆把市场写成这样一个人，是为了让你明白：报价可以利用，但不必服从。",
+    tension: "新手最容易把市场报价当成老师，每天用涨跌判断自己对不对。",
+    argument: [
+      "先承认市场短期会被情绪推动，不总是理性裁判。",
+      "再把自己从报价里抽离出来，回到资产本身是否变差或变好。",
+      "最后只在价格明显有利时行动，其余时间允许自己不接招。"
+    ],
+    decision: "如果你昨天的判断只因为今天跌了就完全改变，说明你买的可能不是资产，而是情绪。",
+    observation: "看基本面有没有变化，而不是只看当天价格有没有让你难受。"
+  },
+  {
+    terms: ["护城河"],
+    caseTitle: "为什么有些公司赚钱，别人却抢不走？",
+    story:
+      "一家店很火，排队很长，但隔壁很快也能开一家类似的店。另一家公司看起来没那么热闹，却让客户离不开、竞争者学不像。费雪和巴菲特关心的是后者：优势能不能持续。",
+    tension: "热闹不等于护城河，增长快也不等于竞争优势强。",
+    argument: [
+      "先观察公司为什么能赚钱：品牌、成本、网络、渠道、技术还是转换成本。",
+      "再问竞争者复制这件事难在哪里。",
+      "最后看这种优势能否转化成长期利润，而不是只停留在故事层面。"
+    ],
+    decision: "真正的护城河不是“大家都知道它”，而是竞争者知道了也很难抢走它。",
+    observation: "看客户留存、利润率稳定性、竞争者进入难度和价格权力。"
+  },
+  {
+    terms: ["资本配置", "现金流"],
+    caseTitle: "公司赚到钱后，为什么还可能毁掉价值？",
+    story:
+      "一家企业赚了很多钱，管理层可以分红、回购、继续投入、并购，也可以为了面子乱扩张。巴菲特反复讨论资本配置，是因为企业不是赚到钱就结束，关键是钱接下来去哪里。",
+    tension: "好生意也可能被糟糕的花钱方式拖累。",
+    argument: [
+      "先看公司有没有真实现金流，而不只是漂亮利润。",
+      "再看管理层把现金投向哪里，回报是否高于机会成本。",
+      "最后判断这些决策是在扩大长期价值，还是只让短期规模更好看。"
+    ],
+    decision: "管理层不会花钱，企业越赚钱，反而可能越容易犯大错。",
+    observation: "看自由现金流、再投资回报、分红回购纪律和并购质量。"
+  },
+  {
+    terms: ["有效市场", "分散", "指数"],
+    caseTitle: "如果聪明人都在市场里，普通人凭什么赢？",
+    story:
+      "你以为自己发现了一个明显机会，但市场里有基金经理、分析师、量化模型和无数交易者也在盯着。指数投资书的切入点不是打击你，而是帮普通人换一个问题：不一定要赢过所有人，也可以拿到市场整体回报。",
+    tension: "越想证明自己比市场聪明，越容易忽略成本、分散和长期纪律这些确定性更高的东西。",
+    argument: [
+      "先承认市场很难长期持续战胜，尤其在信息充分的地方。",
+      "再把目标从“每次选中赢家”改成“低成本、广分散、长期留在场内”。",
+      "最后用纪律减少错误，而不是靠频繁判断证明自己。"
+    ],
+    decision: "普通人的优势可能不是更会预测，而是更少折腾、更少付费、更能坚持。",
+    observation: "看费用、分散程度、持有周期和自己是否频繁改变计划。"
+  },
+  {
+    terms: ["择时", "再平衡"],
+    caseTitle: "你是在等好机会，还是在用等待逃避决策？",
+    story:
+      "很多人说“等跌一点再买”，结果跌了害怕，涨了后悔。投资书谈择时和再平衡，是想把你从情绪等待里拉出来：预测完美时点很难，但维持计划可以训练纪律。",
+    tension: "择时看似谨慎，很多时候只是把不确定性推迟到下一天。",
+    argument: [
+      "先承认低点和高点只有事后才清楚。",
+      "再用资产比例和再平衡规则定义自己能承受的风险。",
+      "最后让规则处理部分情绪，而不是每次都临场发挥。"
+    ],
+    decision: "真正可执行的计划，必须在上涨和下跌时都说得通。",
+    observation: "看目标比例、再平衡阈值、现金安排和自己是否因为行情改变规则。"
+  },
+  {
+    terms: ["趋势", "支撑", "阻力", "成交量"],
+    caseTitle: "图表像一张人群地图，但它不是水晶球",
+    story:
+      "价格突破、成交量放大、趋势延续，看起来像市场在给信号。技术分析的吸引力就在这里：它把人群行为画出来。但严肃的技术分析不会承诺未来，只会要求你定义信号失败怎么办。",
+    tension: "图表最危险的地方，是让人把概率线索误当成确定答案。",
+    argument: [
+      "先把趋势理解为市场参与者当前的合力。",
+      "再用成交量、支撑阻力观察这个合力是否被确认。",
+      "最后给每个判断设置失败条件，避免把图形信仰化。"
+    ],
+    decision: "技术分析的核心不是预测得多漂亮，而是错了能不能及时认错。",
+    observation: "看趋势是否一致、成交量是否支持、关键位置失败后如何退出。"
+  },
+  {
+    terms: ["信用周期", "风险偏好", "周期"],
+    caseTitle: "大家都觉得没风险时，风险可能正在积累",
+    story:
+      "牛市后期最迷人的地方，是几乎所有故事都能讲通：融资容易、资产上涨、坏消息被忽略。霍华德·马克斯谈周期，是想让你看到市场温度：越舒服的时候，越要问风险是不是被低估了。",
+    tension: "风险常常不是在恐慌最明显时出现，而是在乐观最一致时被埋下。",
+    argument: [
+      "先观察资金是否宽松、风险资产是否被追捧。",
+      "再看价格里是否已经装进太多好消息。",
+      "最后承认周期不能精确计时，但可以帮助你调整进攻和防守姿态。"
+    ],
+    decision: "宏观和周期不是让你算命，而是让你知道现在该更贪婪还是更谨慎。",
+    observation: "看信用松紧、估值水平、市场情绪和投资者愿意承担风险的程度。"
+  },
+  {
+    terms: ["确认偏误", "损失厌恶", "锚定", "基准率"],
+    caseTitle: "你以为自己在研究，其实可能只是在找赞同",
+    story:
+      "你买入后开始疯狂看资料。奇怪的是，你越看越相信自己没错，因为你更容易点开支持自己的观点。行为金融和心理学书籍厉害的地方，是把这种隐蔽的自我说服暴露出来。",
+    tension: "投资失败常常不是因为没有信息，而是因为你只允许某些信息进入大脑。",
+    argument: [
+      "先承认人会天然讨厌亏损、讨厌承认错误。",
+      "再识别锚定、确认偏误、损失厌恶这些心理机制如何影响决策。",
+      "最后用流程对抗自己：写反方观点、看基准率、设复盘点。"
+    ],
+    decision: "真正有价值的研究，不是让你更坚定，而是让你更清醒。",
+    observation: "看自己是否主动寻找反证，是否被买入价、历史高点或亏损感绑住。"
+  },
+  {
+    terms: ["回测", "过拟合", "因子"],
+    caseTitle: "一个策略历史很好看，为什么未来可能失灵？",
+    story:
+      "你发现一个回测曲线一路向上，参数稍微一调就更漂亮。量化投资书最想提醒你的，恰恰是这种漂亮：模型可能真的抓住了规律，也可能只是把历史噪声背得滚瓜烂熟。",
+    tension: "历史数据越听话，越要怀疑它是不是只在过去那张考卷上得高分。",
+    argument: [
+      "先把投资想法写成可检验规则，而不是停留在感觉。",
+      "再检查规则是否有经济逻辑，而不是只靠历史拟合。",
+      "最后把交易成本、样本外表现和失效条件放进策略。"
+    ],
+    decision: "一个策略能不能用，不只看它过去赚多少，还要看它为什么应该继续有效。",
+    observation: "看样本外表现、参数敏感度、交易成本、容量和因子背后的经济含义。"
+  },
+  {
+    terms: ["复利", "尾部事件", "能力圈", "回撤"],
+    caseTitle: "长期投资最大的敌人，可能是一次出局",
+    story:
+      "复利听起来温柔，像时间自动帮你变富。但任何一次过度集中、加杠杆或超出能力圈的错误，都可能把多年积累打断。心理与财富类书籍反复讲留余地，就是为了让你别被一次意外打出游戏。",
+    tension: "长期主义不是永远硬扛，而是设计一个自己能活下来的系统。",
+    argument: [
+      "先承认未来会出现无法预测的坏事。",
+      "再把能力圈、分散、现金余量和回撤承受力放进计划。",
+      "最后保护继续参与的资格，因为复利需要时间不中断。"
+    ],
+    decision: "真正的长期，不是赌得更久，而是让自己有资格活得更久。",
+    observation: "看是否用了杠杆、是否过度集中、是否超出理解范围、是否有应急现金。"
+  }
+];
+
+const themeNarrativeFallbacks = {
+  value: {
+    caseTitle: "一个看起来便宜的机会，为什么可能还是陷阱？",
+    story: "你看到一个资产价格跌了很多，第一反应是“是不是便宜了”。价值投资书通常会把你拉回基本问题：它为什么跌，生意是否变差，价格是否已经给错误留了余地？",
+    tension: "便宜是结果，不是理由；真正的理由必须来自价值和风险。",
+    decision: "先看懂资产，再谈价格。",
+    observation: "看现金流、竞争力、估值假设和坏情况。"
+  },
+  growth: {
+    caseTitle: "一个好故事，怎样才算真的成长？",
+    story: "热门公司总有动人的未来叙事，但成长投资书不会只听故事。它会追问：需求是否真实、优势是否扩大、增长是否能变成现金流？",
+    tension: "成长最吸引人的地方，也最容易让人把希望当事实。",
+    decision: "先验证增长质量，再相信增长速度。",
+    observation: "看用户、收入、利润率、再投资效率和竞争格局。"
+  },
+  index: {
+    caseTitle: "你不想每天选股，难道就不能投资吗？",
+    story: "很多普通人以为投资必须找牛股、看盘、预测行情。指数投资书换了一个入口：如果市场长期整体创造价值，普通人可以用分散和低成本参与这件事。",
+    tension: "简单不等于容易，真正难的是多年不乱改。",
+    decision: "把精力从预测转向系统。",
+    observation: "看成本、分散、再平衡和持有纪律。"
+  },
+  technical: {
+    caseTitle: "价格走势背后，是一群人在行动",
+    story: "技术分析把价格和成交量当成人群行为的痕迹。它不是说图形会预测命运，而是让你观察趋势、确认和失败信号。",
+    tension: "信号有用，但信号不是保证。",
+    decision: "先定义失败，再讨论机会。",
+    observation: "看趋势、成交量、关键价位和止损规则。"
+  },
+  macro: {
+    caseTitle: "同样的资产，为什么换个周期就完全不同？",
+    story: "宏观和周期类书籍会把视野拉远：利率、信用、政策和风险偏好会改变整个市场的水位。你不一定能预测日期，但可以感知环境。",
+    tension: "环境不会决定每个结果，但会改变大多数结果的概率。",
+    decision: "判断天气，不假装控制天气。",
+    observation: "看信用、利率、估值、情绪和资金流向。"
+  },
+  behavior: {
+    caseTitle: "你做错决定时，往往感觉自己特别有理由",
+    story: "行为金融的故事通常从一个很普通的瞬间开始：舍不得卖亏损、只看利好、被买入价绑住。它研究的不是市场多疯狂，而是我们自己多容易自我说服。",
+    tension: "越有理由，越要警惕是不是情绪在替你写理由。",
+    decision: "把自己也当成风险源。",
+    observation: "看反方证据、基准率、复盘记录和情绪状态。"
+  },
+  quant: {
+    caseTitle: "把经验写成规则，真的就更理性吗？",
+    story: "量化投资把想法变成规则和数据检验，但它也有自己的陷阱：过拟合、成本、样本选择和失效环境。规则化只是开始，不是免错金牌。",
+    tension: "模型会让人感觉客观，但模型也是人设计的。",
+    decision: "规则要有逻辑，也要知道边界。",
+    observation: "看回测、样本外、参数稳定性和交易成本。"
+  },
+  psychology: {
+    caseTitle: "为什么懂很多道理，还是拿不住钱？",
+    story: "财富心理类书通常不从复杂模型开始，而是从人的欲望、恐惧、攀比和耐心开始。因为长期结果常常由行为习惯决定。",
+    tension: "知识告诉你该怎么做，情绪决定你能不能做。",
+    decision: "先设计能坚持的生活系统，再谈投资系统。",
+    observation: "看现金余量、回撤承受力、目标和行为习惯。"
+  }
+};
+
 const bookGuides = {
   "intelligent-investor": {
     question: "市场每天给你一个价格，你怎么不被它牵着走？",
@@ -618,19 +848,37 @@ function insightPatternForPoint(point) {
   return insightPatterns.find((entry) => entry.terms.some((term) => haystack.includes(term)));
 }
 
+function narrativePatternForPoint(point) {
+  const haystack = [point.title, point.explanation, point.application, point.misconception, point.tags.join(" ")].join(" ");
+  return narrativePatterns.find((entry) => entry.terms.some((term) => haystack.includes(term)));
+}
+
 function insightForPoint(point, section) {
   const pattern = insightPatternForPoint(point);
   const fallback = themeInsightFallbacks[point.themeId] || themeInsightFallbacks.value;
+  const narrative = narrativePatternForPoint(point);
+  const narrativeFallback = themeNarrativeFallbacks[point.themeId] || themeNarrativeFallbacks.value;
   const translation = conceptTranslationForPoint(point);
   const sourceBook = point.sourceBook || bookById(point.bookId)?.title || "来源书籍";
   const sectionName = section?.plainTitle || section?.title || point.sourceNote || "当前章节";
+  const argument = narrative?.argument || [
+    `先从一个真实投资困境切入：${narrativeFallback.tension}`,
+    `再用这本书的核心观点拆解它：${point.explanation}`,
+    `最后回到行动边界：${point.application}`
+  ];
 
   return {
     question: pattern?.question || fallback.question || `${point.title}真正想提醒你什么？`,
+    caseTitle: narrative?.caseTitle || narrativeFallback.caseTitle,
+    story: narrative?.story || narrativeFallback.story,
+    tension: narrative?.tension || narrativeFallback.tension,
+    argument,
     takeaway: pattern?.takeaway || translation || point.explanation,
     analogy: themeAnalogies[point.themeId] || "把抽象概念换成生活问题，会更容易判断自己是否真的理解。",
     bookRole: `在《${sourceBook}》里，这张卡属于“${sectionName}”这条线索：${point.explanation}`,
     turn: pattern?.turn || fallback.turn || point.misconception,
+    decision: narrative?.decision || narrativeFallback.decision || point.application,
+    observation: narrative?.observation || narrativeFallback.observation || point.application,
     reflection: pattern?.reflection || fallback.reflection || themeChecks[point.themeId] || "我能不能用自己的话解释它，并说出一个反例？",
     sourceLine: `${sourceBook}｜${point.sourceNote}`
   };
@@ -1088,8 +1336,8 @@ function renderPoints() {
             const cardInsight = insightForPoint(point, selectedSection);
             return `
               <button class="section-point-card ${state.selectedPointId === point.id ? "selected" : ""} ${state.masteredIds.has(point.id) ? "mastered" : ""}" data-point="${escapeHtml(point.id)}" type="button">
-                <small>洞察 ${index + 1}｜${escapeHtml(point.title)}</small>
-                <span>${state.masteredIds.has(point.id) ? "✓ " : ""}${escapeHtml(cardInsight.question)}</span>
+                <small>案例 ${index + 1}｜${escapeHtml(point.title)}</small>
+                <span>${state.masteredIds.has(point.id) ? "✓ " : ""}${escapeHtml(cardInsight.caseTitle)}</span>
               </button>
             `;
           })
@@ -1099,39 +1347,50 @@ function renderPoints() {
 
     <article class="knowledge-detail-card insight-card" aria-label="洞察卡">
       <div class="detail-heading insight-heading">
-        <span class="insight-badge" aria-hidden="true">INSIGHT</span>
+        <span class="insight-badge" aria-hidden="true">CASE</span>
         <div>
-          <span class="mini-label">本章洞察</span>
-          <h3>${escapeHtml(insight.question)}</h3>
+          <span class="mini-label">从一个投资问题开始</span>
+          <h3>${escapeHtml(insight.caseTitle)}</h3>
           <p>${escapeHtml(insight.sourceLine)}</p>
         </div>
       </div>
 
-      <section class="insight-takeaway" aria-label="一句话带走">
-        <span class="mini-label">一句话带走</span>
+      <section class="story-opening" aria-label="投资故事开场">
+        <span class="mini-label">故事开场</span>
+        <p>${renderWithTerms(insight.story)}</p>
+        <div class="story-tension"><strong>真正的冲突</strong><span>${renderWithTerms(insight.tension)}</span></div>
+      </section>
+
+      <section class="argument-card" aria-label="书中的论证路线">
+        <span class="mini-label">这本书是怎么说服你的</span>
+        <ol>${insight.argument.map((step) => `<li>${renderWithTerms(step)}</li>`).join("")}</ol>
+      </section>
+
+      <section class="insight-takeaway" aria-label="最终带走">
+        <span class="mini-label">最终带走</span>
         <p>${renderWithTerms(insight.takeaway)}</p>
       </section>
 
-      <div class="insight-grid">
+      <div class="decision-grid">
         <section>
-          <span class="mini-label">生活里的同款场景</span>
-          <p>${escapeHtml(insight.analogy)}</p>
+          <span class="mini-label">落到一次真实决策</span>
+          <p>${renderWithTerms(insight.decision)}</p>
         </section>
         <section>
-          <span class="mini-label">书里真正提醒你</span>
-          <p>${renderWithTerms(insight.bookRole)}</p>
+          <span class="mini-label">你该观察什么</span>
+          <p>${renderWithTerms(insight.observation)}</p>
         </section>
       </div>
 
       <section class="insight-turn" aria-label="反直觉提醒">
-        <span class="mini-label">一个反直觉提醒</span>
+        <span class="mini-label">反直觉提醒</span>
         <p>${renderWithTerms(insight.turn)}</p>
       </section>
 
-      <dl class="insight-dl">
-        <div><dt>什么时候有用</dt><dd>${renderWithTerms(selectedPoint.application)}</dd></div>
-        <div><dt>新手最容易误会</dt><dd>${renderWithTerms(selectedPoint.misconception)}</dd></div>
-      </dl>
+      <section class="book-role-card" aria-label="书中位置">
+        <span class="mini-label">放回原书脉络</span>
+        <p>${renderWithTerms(insight.bookRole)}</p>
+      </section>
 
       <section class="reflection-card" aria-label="看完问自己">
         <span class="mini-label">看完问自己</span>
