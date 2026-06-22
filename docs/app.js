@@ -71,6 +71,7 @@ let insightPatterns = [];
 let themeInsightFallbacks = {};
 let narrativePatterns = [];
 let themeNarrativeFallbacks = {};
+let bookCasePatterns = [];
 let bookGuides = {};
 let bookDeepGuides = {};
 let conceptTranslations = [];
@@ -99,6 +100,7 @@ function applyAppContent(content) {
   themeInsightFallbacks = objectFromContent(content, "themeInsightFallbacks");
   narrativePatterns = arrayFromContent(content, "narrativePatterns");
   themeNarrativeFallbacks = objectFromContent(content, "themeNarrativeFallbacks");
+  bookCasePatterns = arrayFromContent(content, "bookCasePatterns");
   bookGuides = objectFromContent(content, "bookGuides");
   bookDeepGuides = objectFromContent(content, "bookDeepGuides");
   conceptTranslations = arrayFromContent(content, "conceptTranslations");
@@ -179,15 +181,25 @@ function narrativePatternForPoint(point) {
   return narrativePatterns.find((entry) => entry.terms.some((term) => haystack.includes(term)));
 }
 
+function bookCaseForPoint(point) {
+  const haystack = [point.title, point.explanation, point.application, point.misconception, point.tags.join(" ")].join(" ");
+  return bookCasePatterns.find((entry) => {
+    if (entry.bookId && entry.bookId !== point.bookId) return false;
+    if (Array.isArray(entry.pointIds) && entry.pointIds.includes(point.id)) return true;
+    return Array.isArray(entry.terms) && entry.terms.some((term) => haystack.includes(term));
+  });
+}
+
 function insightForPoint(point, section) {
   const pattern = insightPatternForPoint(point);
   const fallback = themeInsightFallbacks[point.themeId] || themeInsightFallbacks.value;
+  const bookCase = bookCaseForPoint(point);
   const narrative = narrativePatternForPoint(point);
   const narrativeFallback = themeNarrativeFallbacks[point.themeId] || themeNarrativeFallbacks.value;
   const translation = conceptTranslationForPoint(point);
   const sourceBook = point.sourceBook || bookById(point.bookId)?.title || "来源书籍";
   const sectionName = section?.plainTitle || section?.title || point.sourceNote || "当前章节";
-  const argument = narrative?.argument || [
+  const argument = bookCase?.argument || narrative?.argument || [
     `先从一个真实投资困境切入：${narrativeFallback.tension}`,
     `再用这本书的核心观点拆解它：${point.explanation}`,
     `最后回到行动边界：${point.application}`
@@ -195,18 +207,20 @@ function insightForPoint(point, section) {
 
   return {
     question: pattern?.question || fallback.question || `${point.title}真正想提醒你什么？`,
-    caseTitle: narrative?.caseTitle || narrativeFallback.caseTitle,
-    story: narrative?.story || narrativeFallback.story,
-    tension: narrative?.tension || narrativeFallback.tension,
+    caseTitle: bookCase?.caseTitle || narrative?.caseTitle || narrativeFallback.caseTitle,
+    storyLabel: bookCase ? "书中案例 / 投资操作" : "故事开场",
+    story: bookCase?.story || narrative?.story || narrativeFallback.story,
+    tension: bookCase?.tension || narrative?.tension || narrativeFallback.tension,
     argument,
-    takeaway: pattern?.takeaway || translation || point.explanation,
+    takeaway: bookCase?.takeaway || pattern?.takeaway || translation || point.explanation,
     analogy: themeAnalogies[point.themeId] || "把抽象概念换成生活问题，会更容易判断自己是否真的理解。",
-    bookRole: `在《${sourceBook}》里，这张卡属于“${sectionName}”这条线索：${point.explanation}`,
+    bookRole:
+      bookCase?.bookRole || `在《${sourceBook}》里，这张卡属于“${sectionName}”这条线索：${point.explanation}`,
     turn: pattern?.turn || fallback.turn || point.misconception,
-    decision: narrative?.decision || narrativeFallback.decision || point.application,
-    observation: narrative?.observation || narrativeFallback.observation || point.application,
+    decision: bookCase?.decision || narrative?.decision || narrativeFallback.decision || point.application,
+    observation: bookCase?.observation || narrative?.observation || narrativeFallback.observation || point.application,
     reflection: pattern?.reflection || fallback.reflection || themeChecks[point.themeId] || "我能不能用自己的话解释它，并说出一个反例？",
-    sourceLine: `${sourceBook}｜${point.sourceNote}`
+    sourceLine: `${sourceBook}｜${bookCase?.caseSource || point.sourceNote}`
   };
 }
 
@@ -682,7 +696,7 @@ function renderPoints() {
       </div>
 
       <section class="story-opening" aria-label="投资故事开场">
-        <span class="mini-label">故事开场</span>
+        <span class="mini-label">${escapeHtml(insight.storyLabel)}</span>
         <p>${renderWithTerms(insight.story)}</p>
         <div class="story-tension"><strong>真正的冲突</strong><span>${renderWithTerms(insight.tension)}</span></div>
       </section>
