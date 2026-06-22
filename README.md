@@ -16,6 +16,16 @@ npm run dev
 node server.mjs
 ```
 
+## 项目架构
+
+当前项目按三层组织：
+
+- `data/`：知识库与学习内容源数据。`knowledge-base.json` 存经典书籍、主题和知识点；`app-content.json` 存新手导览、测试题、术语解释、故事化卡片模板和书籍阅读路线。
+- `server.mjs` + `lib/knowledge-store.mjs`：Node 后端与数据读取层。后端提供 `/api/knowledge`、`/api/app-content`、`/api/ask`、`/api/import-book` 等接口，并负责 AI 调用、文件解析和导入任务。
+- `public/`：前端工作台。前端只负责加载数据、渲染研究库、搜索筛选、阅读交互、问答面板和导入界面，不再把知识库内容写死在页面脚本里。
+
+修改内容时优先改 `data/`。修改页面交互或样式时改 `public/`。修改 AI、上传、任务状态或安全逻辑时改 `server.mjs`。
+
 ## AI 配置
 
 在项目根目录创建 `.env.local`：

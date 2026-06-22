@@ -6,7 +6,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { inflateRawSync } from "node:zlib";
-import vm from "node:vm";
+import { loadAppContent, loadKnowledgeBase } from "./lib/knowledge-store.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -213,24 +213,9 @@ function normalizeText(value) {
   return String(value).toLowerCase().replace(/\s+/g, "");
 }
 
-async function loadKnowledgeBase() {
-  const source = await readFile(join(root, "lib", "knowledge-base.ts"), "utf8");
-  const executable = source
-    .replace(/export type ThemeId[\s\S]*?export const themes/, "const themes")
-    .replace(/const themes: Theme\[\] =/, "const themes =")
-    .replace(/export const books: Book\[\] =/, "const books =")
-    .replace(
-      /const pointTemplates: Array<Omit<KnowledgePoint, "id" \| "sourceBook"> & \{ bookId: string \}> =/,
-      "const pointTemplates ="
-    )
-    .replace(/export const knowledgePoints: KnowledgePoint\[\] =/, "const knowledgePoints =");
-
-  const script = new vm.Script(`${executable}\n({ themes, books, knowledgePoints });`);
-  return script.runInNewContext({});
-}
-
 await loadLocalEnv();
 const knowledgeBasePromise = loadKnowledgeBase();
+const appContentPromise = loadAppContent();
 
 function scorePoint(point, booksById, query) {
   const normalizedQuery = normalizeText(query);
@@ -1446,6 +1431,11 @@ const server = createServer(async (request, response) => {
 
     if (request.method === "GET" && url.pathname === "/api/knowledge") {
       json(response, 200, await knowledgeBasePromise);
+      return;
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/app-content") {
+      json(response, 200, await appContentPromise);
       return;
     }
 

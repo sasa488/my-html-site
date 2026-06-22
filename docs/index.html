@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>知投 - 金融研究知识库</title>
+    <meta name="description" content="面向金融学习、研究沉淀和观点复用的专业知识库。" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="产品概览">
+        <div>
+          <p class="eyebrow">Research Knowledge Workspace</p>
+          <h1>知投金融研究库</h1>
+          <p class="subtitle">围绕经典书籍、研究观点、术语解释和引用来源沉淀可检索、可复用的金融知识。</p>
+        </div>
+        <div class="stats" aria-label="知识库统计">
+          <span><strong id="book-count">0</strong> 本书/资料</span>
+          <span><strong id="point-count">0</strong> 个知识点/解读</span>
+          <span><strong id="theme-count">0</strong> 个主题</span>
+          <span><strong id="mastered-count">0/0</strong> 已掌握</span>
+        </div>
+      </section>
+
+      <section id="recommendation-panel" class="recommendation-panel hidden" aria-label="测试结果与推荐书单"></section>
+
+      <section class="control-strip" aria-label="搜索与主题筛选">
+        <label class="searchbox">
+          <span aria-hidden="true">⌕</span>
+          <input id="search-input" placeholder="搜索书籍、作者、主题、术语、观点、引用来源..." aria-label="搜索知识库" />
+        </label>
+        <div id="theme-tabs" class="theme-tabs" role="tablist" aria-label="主题"></div>
+        <div class="control-actions">
+          <button id="intro-open" class="intro-open" type="button">基础知识导览</button>
+          <button id="import-open" class="import-open" type="button">导入研究资料</button>
+        </div>
+      </section>
+
+      <section class="workspace-grid">
+        <aside class="panel library-panel" aria-label="研究书库">
+          <div class="panel-title">
+            <span aria-hidden="true">▣</span>
+            <h2>研究书库</h2>
+          </div>
+          <div id="book-list" class="book-list"></div>
+        </aside>
+
+        <section class="panel main-panel" aria-label="研究阅读区">
+          <div id="book-hero" class="book-hero"></div>
+          <div class="point-layout">
+            <div id="point-list" class="point-list" aria-label="知识点列表"></div>
+            <article id="point-detail" class="point-detail"></article>
+          </div>
+        </section>
+
+        <aside class="panel ask-panel" aria-label="知识库问答">
+          <div class="panel-title">
+            <span aria-hidden="true">✦</span>
+            <h2>知识库问答</h2>
+          </div>
+          <textarea id="question-input" aria-label="输入问题">基于知识库解释：什么是安全边际？</textarea>
+          <button id="ask-button" class="ask-button" type="button">
+            <span aria-hidden="true">✧</span>
+            <span>检索并回答</span>
+          </button>
+          <div id="answer-box" class="answer-box hidden"></div>
+          <div id="citations" class="citations"></div>
+          <div class="notice">
+            <span aria-hidden="true">!</span>
+            <p>仅供研究与学习参考，不构成投资建议。回答应基于知识库来源，不作为买卖依据。</p>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="risk-footer">
+        <span aria-hidden="true">!</span>
+        <span>免责声明：本知识库用于学习、研究与资料整理，不提供个股推荐、收益承诺、仓位建议或市场预测。</span>
+      </footer>
+    </main>
+
+    <section id="quiz-modal" class="quiz-modal hidden" aria-label="投资人格测试" aria-modal="true" role="dialog">
+      <div class="quiz-card">
+        <div class="quiz-head">
+          <p class="eyebrow">BEGINNER MAP</p>
+          <h2>先看懂市场，再测你的投资人格</h2>
+          <p>完全小白也能做：先用几分钟搞清楚股票、基金、价格、风险和时间，再按第一反应选择学习路线。</p>
+        </div>
+        <div id="intro-panel" class="intro-panel"></div>
+        <form id="quiz-form" class="quiz-form hidden"></form>
+      </div>
+    </section>
+
+    <section id="import-modal" class="import-modal hidden" aria-label="导入书籍并生成通俗解读" aria-modal="true" role="dialog">
+      <div class="import-dialog">
+        <header class="import-head">
+          <div>
+            <p class="eyebrow">YOUR BOOK, MADE CLEAR</p>
+            <h2>把一本难书，变成能读下去的路线</h2>
+            <p>上传后先梳理全书主线，再按章节解释概念、生活例子和常见误区。</p>
+          </div>
+          <button id="import-close" class="icon-button" type="button" aria-label="关闭导入窗口" title="关闭">×</button>
+        </header>
+
+        <div id="import-setup" class="import-setup">
+          <div class="import-steps" aria-label="生成步骤">
+            <span class="active"><strong>1</strong>上传书籍</span>
+            <span><strong>2</strong>告诉我你想看懂什么</span>
+            <span><strong>3</strong>生成章节式解读</span>
+          </div>
+
+          <label id="book-dropzone" class="book-dropzone">
+            <input id="book-file" type="file" accept=".pdf,.doc,.docx,.txt,.md,.epub,.mobi,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,application/epub+zip" />
+            <span class="upload-mark" aria-hidden="true">↑</span>
+            <strong>选择文件，或把书拖到这里</strong>
+            <small>支持 PDF、DOC、DOCX、TXT、Markdown、EPUB、MOBI，最大 20MB</small>
+          </label>
+          <div id="book-file-info" class="book-file-info hidden"></div>
+
+          <div class="import-preferences">
+            <label>
+              <span>你现在的阅读基础</span>
+              <select id="reading-level">
+                <option>完全小白</option>
+                <option>有一点基础</option>
+                <option>进阶读者</option>
+              </select>
+            </label>
+            <label>
+              <span>这次最想解决什么</span>
+              <textarea id="reading-goal" rows="3">看懂整本书在讲什么，并能用自己的话复述核心观点</textarea>
+            </label>
+          </div>
+
+          <div class="import-privacy">
+            <strong>上传前请确认</strong>
+            <p>文件只用于本次生成，不会加入公共书库。请仅上传你有权阅读和处理的内容；AI 输出是学习辅助，不替代原书。</p>
+          </div>
+
+          <button id="generate-guide" class="generate-guide" type="button" disabled>开始生成通俗解读</button>
+          <div id="import-status" class="import-status hidden" aria-live="polite"></div>
+          <section id="import-shelf" class="import-shelf hidden" aria-label="我的导入书架">
+            <div class="import-shelf-head"><strong>我的导入书架</strong><small>只保存在当前浏览器</small></div>
+            <div id="import-shelf-list" class="import-shelf-list"></div>
+          </section>
+        </div>
+
+        <div id="import-result" class="import-result hidden">
+          <div id="import-result-head" class="import-result-head"></div>
+          <div class="import-result-actions">
+            <button id="import-restart" type="button">换一本书</button>
+            <button id="save-guide" type="button">保存到我的书架</button>
+            <button id="download-guide" type="button">下载解读 JSON</button>
+          </div>
+          <div class="import-reader">
+            <nav id="import-chapters" class="import-chapters" aria-label="生成的章节目录"></nav>
+            <article id="import-chapter-detail" class="import-chapter-detail"></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

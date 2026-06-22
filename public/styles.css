@@ -1,5 +1,5 @@
 :root {
-  --bg: #f6f7f8;
+  --bg: #f4f6f5;
   --surface: #ffffff;
   --surface-subtle: #fafafa;
   --surface-tint: #f3f6f5;
@@ -14,8 +14,8 @@
   --blue: #315f91;
   --amber: #9a6a18;
   --red: #b42318;
-  --shadow: 0 12px 34px rgba(16, 24, 40, 0.06);
-  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow: 0 18px 46px rgba(16, 24, 40, 0.08);
+  --shadow-soft: 0 5px 18px rgba(16, 24, 40, 0.055);
   --radius: 8px;
   --radius-sm: 6px;
 }
@@ -25,8 +25,8 @@
 }
 
 html {
-  min-width: 320px;
   background: var(--bg);
+  overflow-x: hidden;
 }
 
 body {
@@ -37,6 +37,7 @@ body {
   font-size: 14px;
   line-height: 1.55;
   letter-spacing: 0;
+  overflow-x: hidden;
 }
 
 button,
@@ -69,6 +70,7 @@ p {
 .app-shell {
   min-height: 100vh;
   padding: 22px 24px 24px;
+  max-width: 100vw;
 }
 
 .topbar {
@@ -78,11 +80,21 @@ p {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 22px;
   align-items: end;
-  border: 1px solid var(--line);
+  border: 1px solid #dbe4e0;
   border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: var(--shadow-soft);
-  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--green);
 }
 
 .eyebrow {
@@ -117,11 +129,11 @@ h1 {
   overflow: hidden;
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
-  background: var(--line-soft);
+  background: #e2e8f0;
 }
 
 .stats span {
-  background: #fcfcfd;
+  background: #fbfcfc;
   padding: 12px 13px;
   color: var(--muted);
   font-size: 12px;
@@ -239,6 +251,11 @@ h1 {
   grid-template-columns: minmax(320px, 460px) minmax(0, 1fr) auto;
   gap: 12px;
   align-items: start;
+  min-width: 0;
+}
+
+.control-strip > * {
+  min-width: 0;
 }
 
 .searchbox {
@@ -283,6 +300,8 @@ textarea::placeholder {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .theme-tabs button,
@@ -295,12 +314,14 @@ textarea::placeholder {
   color: var(--ink-soft);
   padding: 0 12px;
   font-weight: 650;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .theme-tabs button.active {
   border-color: var(--green);
   background: #eef6f3;
   color: var(--green-dark);
+  box-shadow: inset 0 0 0 1px rgba(31, 111, 91, 0.08);
 }
 
 .control-actions {
@@ -342,13 +363,15 @@ textarea::placeholder {
   grid-template-columns: 260px minmax(0, 1fr) 340px;
   gap: 14px;
   align-items: start;
+  min-width: 0;
 }
 
 .panel {
-  border: 1px solid var(--line);
+  border: 1px solid #dfe4ea;
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow-soft);
+  min-width: 0;
 }
 
 .library-panel,
@@ -396,6 +419,7 @@ textarea::placeholder {
   color: var(--ink);
   padding: 10px 11px;
   text-align: left;
+  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
 }
 
 .book-row span,
@@ -425,6 +449,7 @@ textarea::placeholder {
 .section-point-card.selected {
   border-color: var(--green);
   background: #f4faf7;
+  box-shadow: inset 3px 0 0 var(--green);
 }
 
 .point-card.mastered,
@@ -460,6 +485,7 @@ textarea::placeholder {
   min-width: 0;
   padding: 0;
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 .book-hero {
@@ -468,7 +494,7 @@ textarea::placeholder {
   gap: 18px;
   align-items: start;
   border-bottom: 1px solid var(--line);
-  background: #fcfcfd;
+  background: #fbfcfc;
   padding: 18px 20px;
 }
 
@@ -1973,6 +1999,7 @@ dd {
 
   .topbar {
     align-items: start;
+    gap: 16px;
   }
 
   .stats {
@@ -2039,18 +2066,85 @@ dd {
 }
 
 @media (max-width: 560px) {
+  .app-shell {
+    padding: 10px;
+  }
+
+  .topbar,
+  .panel,
+  .recommendation-panel {
+    border-radius: 7px;
+  }
+
+  .topbar {
+    padding: 18px 16px 16px;
+  }
+
+  .control-strip {
+    gap: 10px;
+    margin: 10px auto;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .searchbox {
+    min-height: 42px;
+    padding: 0 12px;
+  }
+
   .stats {
     grid-template-columns: 1fr;
   }
 
   .theme-tabs {
+    width: 100%;
+    max-width: calc(100vw - 20px);
     overflow-x: auto;
+    overflow-y: hidden;
     flex-wrap: nowrap;
-    padding-bottom: 4px;
+    padding: 0 0 6px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .theme-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .theme-tabs button {
+    flex: 0 0 auto;
     white-space: nowrap;
+    min-height: 36px;
+    padding: 0 11px;
+  }
+
+  .control-actions {
+    gap: 7px;
+  }
+
+  .control-actions button {
+    min-width: 0;
+    padding: 0 9px;
+    white-space: normal;
+  }
+
+  .book-hero,
+  .book-guide,
+  .library-panel,
+  .ask-panel {
+    padding: 14px;
+  }
+
+  .book-hero h2 {
+    font-size: 21px;
+  }
+
+  .point-list {
+    padding: 12px;
+  }
+
+  .point-detail {
+    padding: 14px;
   }
 
   .quiz-card {
