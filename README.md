@@ -1,3 +1,13 @@
+---
+title: Zhitou
+emoji: 📚
+colorFrom: green
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # 知投 - 金融经典知识库
 
 一个面向投资新手的金融经典知识库。除了官方书库、学习路线和 AI 问答，用户还可以导入自己有权阅读的书籍，生成连续的全书地图、章节导读、术语白话解释和生活化例子。
