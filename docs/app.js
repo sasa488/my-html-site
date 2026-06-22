@@ -12,7 +12,10 @@ const state = {
   introSeen: false,
   importFile: null,
   importedGuide: null,
-  importedChapterId: ""
+  importedChapterId: "",
+  smartInsights: new Map(),
+  smartInsightLoadingIds: new Set(),
+  smartInsightUnavailable: false
 };
 
 const els = {
@@ -190,10 +193,100 @@ function bookCaseForPoint(point) {
   });
 }
 
+function smartInsightCacheKey(point) {
+  return `zhitou.smartInsight.v2.${point.bookId}.${point.id}`;
+}
+
+function compactInsightText(value, maxLength = 420) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+}
+
+function normalizeSmartInsight(value) {
+  if (!value || typeof value !== "object") return null;
+  const argument = Array.isArray(value.argument)
+    ? value.argument.map((item) => compactInsightText(item, 140)).filter(Boolean).slice(0, 4)
+    : [];
+  const insight = {
+    caseTitle: compactInsightText(value.caseTitle, 90),
+    storyLabel: compactInsightText(value.storyLabel || (value.sourceMode === "book_case" ? "AI 书中案例 / 投资操作" : "AI 场景化解读"), 28),
+    story: compactInsightText(value.story, 420),
+    tension: compactInsightText(value.tension, 220),
+    argument,
+    takeaway: compactInsightText(value.takeaway, 220),
+    decision: compactInsightText(value.decision, 180),
+    observation: compactInsightText(value.observation, 180),
+    bookRole: compactInsightText(value.bookRole, 260),
+    sourceLine: compactInsightText(value.sourceLine, 120),
+    warning: compactInsightText(value.warning, 160),
+    confidence: compactInsightText(value.confidence || "中", 8)
+  };
+  if (!insight.caseTitle || !insight.story || !insight.tension || insight.argument.length < 2 || !insight.takeaway) {
+    return null;
+  }
+  return insight;
+}
+
+function cachedSmartInsight(point) {
+  const existing = state.smartInsights.get(point.id);
+  if (existing) return existing;
+  try {
+    const cached = JSON.parse(localStorage.getItem(smartInsightCacheKey(point)) || "null");
+    if (!cached || Date.now() - Number(cached.savedAt || 0) > 7 * 24 * 60 * 60 * 1000) return null;
+    const insight = normalizeSmartInsight(cached.insight);
+    if (!insight) return null;
+    state.smartInsights.set(point.id, insight);
+    return insight;
+  } catch {
+    return null;
+  }
+}
+
+function saveSmartInsight(point, insight) {
+  state.smartInsights.set(point.id, insight);
+  try {
+    localStorage.setItem(smartInsightCacheKey(point), JSON.stringify({ savedAt: Date.now(), insight }));
+  } catch {
+    // 浏览器缓存满了也不影响知识卡片阅读。
+  }
+}
+
+async function requestSmartInsight(point, section) {
+  if (!point || state.smartInsightUnavailable || cachedSmartInsight(point) || state.smartInsightLoadingIds.has(point.id)) return;
+  state.smartInsightLoadingIds.add(point.id);
+  renderPoints();
+  try {
+    const response = await fetch("/api/card-insight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        bookId: point.bookId,
+        pointId: point.id,
+        sectionTitle: section?.title || section?.plainTitle || ""
+      })
+    });
+    if (response.status === 404 || response.status === 405 || response.status === 503) {
+      state.smartInsightUnavailable = true;
+      return;
+    }
+    if (!response.ok) return;
+    const data = await response.json();
+    const insight = normalizeSmartInsight(data.insight);
+    if (insight) saveSmartInsight(point, insight);
+  } catch {
+    state.smartInsightUnavailable = true;
+  } finally {
+    state.smartInsightLoadingIds.delete(point.id);
+    if (state.selectedPointId === point.id) renderPoints();
+  }
+}
+
 function insightForPoint(point, section) {
   const pattern = insightPatternForPoint(point);
   const fallback = themeInsightFallbacks[point.themeId] || themeInsightFallbacks.value;
-  const bookCase = bookCaseForPoint(point);
+  const smartInsight = cachedSmartInsight(point);
+  const isSmartLoading = state.smartInsightLoadingIds.has(point.id);
+  const bookCase = smartInsight || bookCaseForPoint(point);
   const narrative = narrativePatternForPoint(point);
   const narrativeFallback = themeNarrativeFallbacks[point.themeId] || themeNarrativeFallbacks.value;
   const translation = conceptTranslationForPoint(point);
@@ -208,7 +301,7 @@ function insightForPoint(point, section) {
   return {
     question: pattern?.question || fallback.question || `${point.title}真正想提醒你什么？`,
     caseTitle: bookCase?.caseTitle || narrative?.caseTitle || narrativeFallback.caseTitle,
-    storyLabel: bookCase ? "书中案例 / 投资操作" : "故事开场",
+    storyLabel: smartInsight?.storyLabel || (isSmartLoading ? "AI 正在生成故事解读" : bookCase ? "书中案例 / 投资操作" : "故事开场"),
     story: bookCase?.story || narrative?.story || narrativeFallback.story,
     tension: bookCase?.tension || narrative?.tension || narrativeFallback.tension,
     argument,
@@ -220,7 +313,8 @@ function insightForPoint(point, section) {
     decision: bookCase?.decision || narrative?.decision || narrativeFallback.decision || point.application,
     observation: bookCase?.observation || narrative?.observation || narrativeFallback.observation || point.application,
     reflection: pattern?.reflection || fallback.reflection || themeChecks[point.themeId] || "我能不能用自己的话解释它，并说出一个反例？",
-    sourceLine: `${sourceBook}｜${bookCase?.caseSource || point.sourceNote}`
+    sourceLine: smartInsight?.sourceLine || `${sourceBook}｜${bookCase?.caseSource || point.sourceNote}`,
+    generationNote: smartInsight?.warning || (isSmartLoading ? "正在根据这本书、章节线索和知识点生成故事化解读，稍后会自动替换当前卡片。" : "")
   };
 }
 
@@ -699,6 +793,7 @@ function renderPoints() {
         <span class="mini-label">${escapeHtml(insight.storyLabel)}</span>
         <p>${renderWithTerms(insight.story)}</p>
         <div class="story-tension"><strong>真正的冲突</strong><span>${renderWithTerms(insight.tension)}</span></div>
+        ${insight.generationNote ? `<p class="smart-insight-note">${escapeHtml(insight.generationNote)}</p>` : ""}
       </section>
 
       <section class="argument-card" aria-label="书中的论证路线">
@@ -770,6 +865,7 @@ function renderPoints() {
   els.pointDetail.querySelector('[data-action="next"]')?.addEventListener("click", () => movePoint(1));
   els.pointDetail.querySelector('[data-action="random"]')?.addEventListener("click", selectRandomPoint);
   els.pointDetail.querySelector('[data-action="ask"]')?.addEventListener("click", () => askAboutPoint(selectedPoint));
+  requestSmartInsight(selectedPoint, selectedSection);
 }
 
 function importedGuidesForStats() {
@@ -1220,8 +1316,11 @@ function renderImportedChapter(guide, chapter) {
               <section>
                 <span class="point-number">${index + 1}</span>
                 <h4>${escapeHtml(point.title || "关键点")}</h4>
+                ${point.storyHook ? `<div class="import-story-hook"><span class="mini-label">故事切入</span><p>${escapeHtml(point.storyHook)}</p></div>` : ""}
                 <p>${escapeHtml(point.plainExplanation || "")}</p>
+                ${(point.argumentPath || []).length ? `<ol class="import-argument-path">${point.argumentPath.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>` : ""}
                 <dl>
+                  ${point.decisionPrompt ? `<div><dt>落到一次判断</dt><dd>${escapeHtml(point.decisionPrompt)}</dd></div>` : ""}
                   <div><dt>什么时候有用</dt><dd>${escapeHtml(point.whenUseful || "")}</dd></div>
                   <div><dt>最容易误会</dt><dd>${escapeHtml(point.misconception || "")}</dd></div>
                 </dl>

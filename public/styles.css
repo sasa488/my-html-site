@@ -856,6 +856,15 @@ dd,
   line-height: 1.7;
 }
 
+.smart-insight-note {
+  margin-top: 10px;
+  border-top: 1px dashed #cbdcd6;
+  padding-top: 10px;
+  color: var(--muted) !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+}
+
 .argument-card {
   margin-bottom: 12px;
 }
@@ -1720,6 +1729,28 @@ dd {
 .import-key-points > section > p {
   color: var(--ink-soft);
   line-height: 1.7;
+}
+
+.import-story-hook {
+  margin: 8px 0 10px;
+  border-left: 3px solid var(--green);
+  background: #f7fbf8;
+  padding: 10px 12px;
+}
+
+.import-story-hook p {
+  color: var(--ink) !important;
+  line-height: 1.65;
+  margin-bottom: 0;
+}
+
+.import-argument-path {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 12px;
+  padding-left: 19px;
+  color: var(--ink-soft);
+  line-height: 1.6;
 }
 
 .import-key-points dl {

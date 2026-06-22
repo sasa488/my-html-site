@@ -44,6 +44,8 @@ const supportedBookExtensions = new Set([".pdf", ".doc", ".docx", ".txt", ".md",
 const maxBookBytes = 20 * 1024 * 1024;
 const bookJobs = new Map();
 const bookJobTtlMs = 2 * 60 * 60 * 1000;
+const cardInsightCache = new Map();
+const cardInsightTtlMs = 24 * 60 * 60 * 1000;
 
 const bookGuideSchema = {
   type: "object",
@@ -94,10 +96,13 @@ const bookGuideSchema = {
               properties: {
                 title: { type: "string" },
                 plainExplanation: { type: "string" },
+                storyHook: { type: "string" },
+                argumentPath: { type: "array", items: { type: "string" }, maxItems: 3 },
+                decisionPrompt: { type: "string" },
                 whenUseful: { type: "string" },
                 misconception: { type: "string" }
               },
-              required: ["title", "plainExplanation", "whenUseful", "misconception"]
+              required: ["title", "plainExplanation", "storyHook", "argumentPath", "decisionPrompt", "whenUseful", "misconception"]
             }
           },
           terms: {
@@ -202,6 +207,39 @@ const chapterDetailSchema = {
     checkpoint: { type: "string" }
   },
   required: ["summary", "lifeExample", "sourceNote", "keyPoints", "terms", "checkpoint"]
+};
+
+const cardInsightSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    sourceMode: { type: "string", enum: ["book_case", "concept_scenario"] },
+    caseTitle: { type: "string" },
+    story: { type: "string" },
+    tension: { type: "string" },
+    argument: { type: "array", items: { type: "string" }, maxItems: 4 },
+    takeaway: { type: "string" },
+    decision: { type: "string" },
+    observation: { type: "string" },
+    bookRole: { type: "string" },
+    sourceLine: { type: "string" },
+    confidence: { type: "string", enum: ["高", "中", "低"] },
+    warning: { type: "string" }
+  },
+  required: [
+    "sourceMode",
+    "caseTitle",
+    "story",
+    "tension",
+    "argument",
+    "takeaway",
+    "decision",
+    "observation",
+    "bookRole",
+    "sourceLine",
+    "confidence",
+    "warning"
+  ]
 };
 
 function json(response, statusCode, payload) {
@@ -1047,10 +1085,13 @@ function assertChapterDetail(detail, outlineChapter, index) {
     .map((point, pointIndex) => ({
       title: truncateString(point.title || `关键点 ${pointIndex + 1}`, 40),
       plainExplanation: truncateString(point.plainExplanation, 180),
+      storyHook: truncateString(point.storyHook || point.plainExplanation, 180),
+      argumentPath: compactStringArray(point.argumentPath, 3, 110),
+      decisionPrompt: truncateString(point.decisionPrompt || point.whenUseful, 120),
       whenUseful: truncateString(point.whenUseful, 120),
       misconception: truncateString(point.misconception, 120)
     }))
-    .filter((point) => point.plainExplanation && point.whenUseful && point.misconception);
+    .filter((point) => point.plainExplanation && point.storyHook && point.whenUseful && point.misconception);
   if (!summary || !lifeExample || keyPoints.length === 0) {
     invalidChapter(`第 ${index + 1} 章没有形成完整解读。`);
   }
@@ -1071,6 +1112,201 @@ function assertChapterDetail(detail, outlineChapter, index) {
     terms,
     checkpoint: truncateString(detail.checkpoint || "你能用自己的话复述这一章吗？", 100)
   };
+}
+
+function assertCardInsight(value) {
+  const invalidInsight = (message) => {
+    const error = new Error(message);
+    error.code = "invalid_card_insight";
+    throw error;
+  };
+  if (!value || typeof value !== "object") invalidInsight("AI 返回的故事卡格式无效。");
+  const sourceMode = value.sourceMode === "book_case" ? "book_case" : "concept_scenario";
+  const argument = compactStringArray(value.argument, 4, 120);
+  const insight = {
+    sourceMode,
+    storyLabel: sourceMode === "book_case" ? "AI 书中案例 / 投资操作" : "AI 场景化解读",
+    caseTitle: truncateString(value.caseTitle, 70),
+    story: truncateString(value.story, 360),
+    tension: truncateString(value.tension, 180),
+    argument,
+    takeaway: truncateString(value.takeaway, 180),
+    decision: truncateString(value.decision, 150),
+    observation: truncateString(value.observation, 150),
+    bookRole: truncateString(value.bookRole, 220),
+    sourceLine: truncateString(value.sourceLine, 100),
+    confidence: ["高", "中", "低"].includes(value.confidence) ? value.confidence : "中",
+    warning: truncateString(value.warning, 140)
+  };
+  if (!insight.caseTitle || !insight.story || !insight.tension || insight.argument.length < 2 || !insight.takeaway) {
+    invalidInsight("AI 返回的故事卡不完整。");
+  }
+  return insight;
+}
+
+function bookSectionContext(appContent, bookId, pointId) {
+  const deepGuide = appContent.bookDeepGuides?.[bookId];
+  const deepSection = deepGuide?.sections?.find((section) => Array.isArray(section.pointIds) && section.pointIds.includes(pointId));
+  if (deepSection) {
+    return {
+      title: truncateString(deepSection.title, 80),
+      plainTitle: truncateString(deepSection.plainTitle, 80),
+      summary: truncateString(deepSection.summary, 220),
+      checkpoint: truncateString(deepSection.checkpoint, 120)
+    };
+  }
+  const guide = appContent.bookGuides?.[bookId];
+  return guide
+    ? {
+        title: truncateString(guide.question, 80),
+        plainTitle: truncateString(guide.steps?.join(" / "), 120),
+        summary: truncateString(guide.entry, 220),
+        checkpoint: "用自己的话解释这张卡如何服务于整本书的主问题。"
+      }
+    : {};
+}
+
+async function requestProviderJson({ provider, messages, maxTokens, validate, compactInstruction }) {
+  if (provider === "openai") {
+    let lastError;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const content = await callOpenAiText({
+          instructions: messages[0]?.content || "只输出合法 JSON。",
+          input: messages
+            .slice(1)
+            .map((message) => message.content)
+            .join("\n\n")
+        });
+        return validate(parseJsonOutput(content));
+      } catch (error) {
+        lastError = error;
+        if (attempt === 1) throw error;
+        messages = [
+          ...messages,
+          {
+            role: "user",
+            content: compactInstruction || "上一次输出不完整。请重新生成更短的合法 JSON，不要输出解释文字。"
+          }
+        ];
+      }
+    }
+    throw lastError || new Error("AI 输出解析失败。");
+  }
+
+  return requestValidatedJson({
+    provider,
+    messages,
+    maxTokens,
+    validate,
+    compactInstruction
+  });
+}
+
+async function createCardInsight({ provider, book, point, theme, appContent }) {
+  const section = bookSectionContext(appContent, book.id, point.id);
+  const prompt = `请为“知投”金融知识库生成一张故事化知识卡，只输出合法 JSON。
+
+目标：不要直接讲道理，要先从这本书里的真实案例、作者的投资操作、书中论证场景或一个贴近原书主题的投资困境切入，再解释知识点。
+
+重要约束：
+1. 优先使用该书或作者公开、经典且与你有把握的案例；如果没有把握，不要编造具体投资操作，sourceMode 改为 concept_scenario，用生活化投资场景替代。
+2. 不复制书中长段原文，不提供个股买卖建议、仓位建议、收益承诺或市场预测。
+3. 面向金融小白，避免黑话堆叠；每句话都要服务于理解这本书。
+4. argument 写 3 步，说明“这本书如何一步步说服读者”。
+5. warning 用一句话说明来源边界，例如“基于知识库线索与公开常识生成，建议回到原书核对案例细节”。
+6. JSON 必须符合 schema，不要输出 Markdown：
+${JSON.stringify(cardInsightSchema)}
+
+知识库上下文：
+${JSON.stringify(
+  {
+    book: {
+      title: book.title,
+      author: book.author,
+      summary: book.summary,
+      difficulty: book.difficulty,
+      audience: book.audience
+    },
+    theme: {
+      name: theme?.name || "",
+      summary: theme?.summary || ""
+    },
+    section,
+    point: {
+      title: point.title,
+      explanation: point.explanation,
+      application: point.application,
+      misconception: point.misconception,
+      sourceNote: point.sourceNote,
+      tags: point.tags
+    }
+  },
+  null,
+  2
+)}`;
+
+  return requestProviderJson({
+    provider,
+    maxTokens: 1_600,
+    validate: assertCardInsight,
+    messages: [
+      {
+        role: "system",
+        content:
+          "你是知投的金融经典阅读教练。你擅长把投资经典中的案例、故事和论证转成新手能理解的学习卡。必须输出合法 JSON。"
+      },
+      { role: "user", content: prompt }
+    ],
+    compactInstruction:
+      "上一次故事卡不完整。请重新生成更短的合法 JSON：story 不超过 180 字，argument 只保留 3 步，所有字段必须存在。"
+  });
+}
+
+async function handleCardInsight(request, response) {
+  const rawBody = await readBody(request, 64 * 1024);
+  const body = rawBody ? JSON.parse(rawBody) : {};
+  const bookId = String(body.bookId || "").trim();
+  const pointId = String(body.pointId || "").trim();
+  if (!bookId || !pointId) {
+    json(response, 400, { error: "缺少书籍或知识点编号。" });
+    return;
+  }
+
+  const provider = currentAiProvider();
+  if (provider === "none") {
+    json(response, 503, {
+      code: "missing_api_key",
+      error: "当前站点还没有启用 AI 故事卡服务。"
+    });
+    return;
+  }
+
+  const [knowledgeBase, appContent] = await Promise.all([knowledgeBasePromise, appContentPromise]);
+  const book = knowledgeBase.books.find((item) => item.id === bookId);
+  const point = knowledgeBase.knowledgePoints.find((item) => item.id === pointId && item.bookId === bookId);
+  if (!book || !point) {
+    json(response, 404, { error: "没有找到对应的书籍知识点。" });
+    return;
+  }
+  const theme = knowledgeBase.themes.find((item) => item.id === point.themeId || item.id === book.themeId);
+  const cacheKey = `${provider}:${bookId}:${pointId}`;
+  const cached = cardInsightCache.get(cacheKey);
+  if (cached && Date.now() - cached.createdAt < cardInsightTtlMs) {
+    json(response, 200, { insight: cached.insight, provider, cached: true });
+    return;
+  }
+
+  try {
+    const insight = await createCardInsight({ provider, book, point, theme, appContent });
+    cardInsightCache.set(cacheKey, { insight, createdAt: Date.now() });
+    json(response, 200, { insight, provider, cached: false });
+  } catch (error) {
+    json(response, 502, {
+      error: error instanceof Error ? error.message : "AI 故事卡生成失败。",
+      details: error?.details || ""
+    });
+  }
 }
 
 async function createBookOutline({ provider, fileName, sourceMaterial, readingLevel, userGoal, onProgress }) {
@@ -1119,9 +1355,10 @@ async function createChapterDetail({ provider, bookTitle, overview, outlineChapt
 1. 只写这一章，不要输出其他章节。
 2. summary 解释本章观点，lifeExample 给新手能理解的生活例子。
 3. keyPoints 输出 2-4 个，每个都要有解释、适用场景、常见误区。
-4. terms 最多 4 个，没有就输出空数组。
-5. 不提供投资建议，不复制长段原文。
-6. JSON 必须符合 schema，不要输出 Markdown：
+4. 每个 keyPoint 必须先给 storyHook：从作者讲过的场景、章节中的例子、一个贴近本章的投资困境或生活化故事切入；argumentPath 用 2-3 步说明本章如何论证这个点；decisionPrompt 写成读者能带走的判断动作。
+5. terms 最多 4 个，没有就输出空数组。
+6. 不提供投资建议，不复制长段原文。
+7. JSON 必须符合 schema，不要输出 Markdown：
 ${JSON.stringify(chapterDetailSchema)}
 
 资料：
@@ -1348,6 +1585,10 @@ setInterval(() => {
   for (const [jobId, job] of bookJobs) {
     if (job.updatedAt < cutoff) bookJobs.delete(jobId);
   }
+  const cardCutoff = Date.now() - cardInsightTtlMs;
+  for (const [cacheKey, cached] of cardInsightCache) {
+    if (cached.createdAt < cardCutoff) cardInsightCache.delete(cacheKey);
+  }
 }, 5 * 60 * 1000).unref();
 
 async function handleImportBook(request, response) {
@@ -1447,6 +1688,11 @@ const server = createServer(async (request, response) => {
 
     if (request.method === "POST" && url.pathname === "/api/ask") {
       await handleAsk(request, response);
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/card-insight") {
+      await handleCardInsight(request, response);
       return;
     }
 
