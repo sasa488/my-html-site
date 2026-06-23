@@ -360,7 +360,7 @@ textarea::placeholder {
   max-width: 1540px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(220px, 250px) minmax(0, 1fr) minmax(280px, 320px);
   gap: 14px;
   align-items: start;
   min-width: 0;
@@ -484,7 +484,7 @@ textarea::placeholder {
 .main-panel {
   min-width: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: var(--shadow);
 }
 
@@ -621,8 +621,9 @@ textarea::placeholder {
 
 .point-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 260px) minmax(380px, 1fr);
+  grid-template-columns: minmax(190px, 240px) minmax(0, 1fr);
   gap: 0;
+  align-items: start;
 }
 
 .point-list {
@@ -1975,20 +1976,29 @@ dd {
 }
 
 @media (max-width: 1360px) {
+  .workspace-grid {
+    grid-template-columns: minmax(210px, 238px) minmax(0, 1fr) minmax(260px, 300px);
+    gap: 12px;
+  }
+
   .point-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
   }
 
   .point-list {
-    max-height: 360px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
+    max-height: 680px;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+  }
+
+  .section-cards {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1220px) {
   .workspace-grid {
-    grid-template-columns: 260px minmax(0, 1fr);
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   }
 
   .ask-panel {
