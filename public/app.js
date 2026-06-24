@@ -406,18 +406,21 @@ function drawShareCard({ book, point, insight }) {
   const smallFont = `400 22px ${fontFamily}`;
 
   const argumentItems = (insight.argument || []).slice(0, 3);
-  const contentHeight =
-    76 +
-    measureBlock(titleFont, insight.caseTitle, 50) +
-    42 +
-    measureBlock(bodyFont, insight.story, 46) +
-    44 +
-    argumentItems.reduce((total, item) => total + measureBlock(bodyFont, item, 42, contentWidth - 52) + 18, 0) +
-    44 +
-    measureBlock(strongFont, insight.takeaway, 46, contentWidth - 56) +
-    54 +
-    measureBlock(smallFont, "仅供学习研究，不构成投资建议。", 30);
-  const height = Math.max(1180, margin * 2 + contentHeight);
+  const titleHeight = measureBlock(titleFont, insight.caseTitle, 50);
+  const storyHeight = measureBlock(bodyFont, insight.story, 46);
+  const argumentHeights = argumentItems.map((item) => Math.max(42, measureBlock(bodyFont, item, 42, contentWidth - 52)));
+  const takeawayHeight = Math.max(130, measureBlock(strongFont, insight.takeaway, 46, contentWidth - 56) + 62);
+
+  let measuredY = margin;
+  measuredY += 70;
+  measuredY += titleHeight + 24 + 34;
+  measuredY += 34 + storyHeight + 32;
+  measuredY += 40;
+  measuredY += argumentHeights.reduce((total, itemHeight) => total + itemHeight + 18, 0);
+  measuredY += 6;
+  measuredY += takeawayHeight + 42;
+  const minFooterY = measuredY;
+  const height = Math.max(1180, minFooterY + 34 + margin);
   const canvas = document.createElement("canvas");
   canvas.width = width * scale;
   canvas.height = height * scale;
@@ -495,7 +498,6 @@ function drawShareCard({ book, point, insight }) {
   y += 6;
 
   ctx.fillStyle = "#f4faf7";
-  const takeawayHeight = Math.max(130, measureBlock(strongFont, insight.takeaway, 46, contentWidth - 56) + 62);
   roundedRect(ctx, margin, y, contentWidth, takeawayHeight, 18);
   ctx.fill();
   ctx.strokeStyle = "#bdd2ca";
@@ -508,15 +510,17 @@ function drawShareCard({ book, point, insight }) {
     font: strongFont,
     color: "#174f42"
   });
-  y += takeawayHeight + 34;
+  y += takeawayHeight + 42;
 
+  const footerY = Math.max(y, height - margin - 34);
   ctx.fillStyle = "#667085";
   ctx.font = smallFont;
-  ctx.fillText("仅供学习研究，不构成投资建议。", margin, height - margin - 34);
+  ctx.textBaseline = "top";
+  ctx.fillText("仅供学习研究，不构成投资建议。", margin, footerY);
   ctx.fillStyle = "#1f6f5b";
   ctx.font = `800 22px ${fontFamily}`;
   ctx.textAlign = "right";
-  ctx.fillText("Read to Invest · 知投", width - margin, height - margin - 34);
+  ctx.fillText("Read to Invest · 知投", width - margin, footerY);
   ctx.textAlign = "left";
 
   return canvas;
