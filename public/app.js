@@ -194,10 +194,14 @@ function bookCaseForPoint(point) {
 }
 
 function smartInsightCacheKey(point) {
-  return `zhitou.smartInsight.v2.${point.bookId}.${point.id}`;
+  return `zhitou.smartInsight.v3.${point.bookId}.${point.id}`;
 }
 
-function compactInsightText(value, maxLength = 420) {
+function normalizeInsightText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function shortInsightText(value, maxLength) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 }
@@ -205,21 +209,21 @@ function compactInsightText(value, maxLength = 420) {
 function normalizeSmartInsight(value) {
   if (!value || typeof value !== "object") return null;
   const argument = Array.isArray(value.argument)
-    ? value.argument.map((item) => compactInsightText(item, 140)).filter(Boolean).slice(0, 4)
+    ? value.argument.map(normalizeInsightText).filter(Boolean).slice(0, 4)
     : [];
   const insight = {
-    caseTitle: compactInsightText(value.caseTitle, 90),
-    storyLabel: compactInsightText(value.storyLabel || (value.sourceMode === "book_case" ? "AI 书中案例 / 投资操作" : "AI 场景化解读"), 28),
-    story: compactInsightText(value.story, 420),
-    tension: compactInsightText(value.tension, 220),
+    caseTitle: normalizeInsightText(value.caseTitle),
+    storyLabel: shortInsightText(value.storyLabel || (value.sourceMode === "book_case" ? "AI 书中案例 / 投资操作" : "AI 场景化解读"), 28),
+    story: normalizeInsightText(value.story),
+    tension: normalizeInsightText(value.tension),
     argument,
-    takeaway: compactInsightText(value.takeaway, 220),
-    decision: compactInsightText(value.decision, 180),
-    observation: compactInsightText(value.observation, 180),
-    bookRole: compactInsightText(value.bookRole, 260),
-    sourceLine: compactInsightText(value.sourceLine, 120),
-    warning: compactInsightText(value.warning, 160),
-    confidence: compactInsightText(value.confidence || "中", 8)
+    takeaway: normalizeInsightText(value.takeaway),
+    decision: normalizeInsightText(value.decision),
+    observation: normalizeInsightText(value.observation),
+    bookRole: normalizeInsightText(value.bookRole),
+    sourceLine: normalizeInsightText(value.sourceLine),
+    warning: normalizeInsightText(value.warning),
+    confidence: shortInsightText(value.confidence || "中", 8)
   };
   if (!insight.caseTitle || !insight.story || !insight.tension || insight.argument.length < 2 || !insight.takeaway) {
     return null;
@@ -325,10 +329,13 @@ function sanitizeFileName(value) {
     .slice(0, 80);
 }
 
-function canvasLines(ctx, text, maxWidth, maxLines = Infinity) {
+function canvasLines(ctx, text, maxWidth, options = {}) {
   const source = String(text || "").replace(/\s+/g, " ").trim();
+  const maxLines = typeof options === "number" ? options : options.maxLines ?? Infinity;
+  const shouldEllipsize = typeof options === "object" && options.ellipsis === true;
   const lines = [];
   let line = "";
+  let truncated = false;
   for (const char of Array.from(source)) {
     const testLine = line + char;
     if (ctx.measureText(testLine).width <= maxWidth || !line) {
@@ -337,10 +344,13 @@ function canvasLines(ctx, text, maxWidth, maxLines = Infinity) {
     }
     lines.push(line);
     line = char;
-    if (lines.length >= maxLines) break;
+    if (lines.length >= maxLines) {
+      truncated = true;
+      break;
+    }
   }
-  if (line && lines.length < maxLines) lines.push(line);
-  if (Number.isFinite(maxLines) && lines.length === maxLines && line) {
+  if (!truncated && line && lines.length < maxLines) lines.push(line);
+  if (truncated && shouldEllipsize && lines.length) {
     const lastIndex = lines.length - 1;
     let clipped = lines[lastIndex];
     while (clipped.length > 1 && ctx.measureText(`${clipped}…`).width > maxWidth) clipped = clipped.slice(0, -1);
@@ -354,7 +364,7 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, options = {}) {
   ctx.font = options.font || "28px sans-serif";
   ctx.fillStyle = options.color || "#17202a";
   ctx.textBaseline = "top";
-  const lines = canvasLines(ctx, text, maxWidth, options.maxLines);
+  const lines = canvasLines(ctx, text, maxWidth, options);
   for (const line of lines) {
     ctx.fillText(line, x, y);
     y += lineHeight;
@@ -383,9 +393,9 @@ function drawShareCard({ book, point, insight }) {
   const measureCtx = measureCanvas.getContext("2d");
   const fontFamily = 'Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif';
 
-  const measureBlock = (font, text, lineHeight, maxLines) => {
+  const measureBlock = (font, text, lineHeight, maxWidth = contentWidth, options = {}) => {
     measureCtx.font = font;
-    return canvasLines(measureCtx, text, contentWidth, maxLines).length * lineHeight;
+    return canvasLines(measureCtx, text, maxWidth, options).length * lineHeight;
   };
 
   const titleFont = `700 42px ${fontFamily}`;
@@ -398,16 +408,16 @@ function drawShareCard({ book, point, insight }) {
   const argumentItems = (insight.argument || []).slice(0, 3);
   const contentHeight =
     76 +
-    measureBlock(titleFont, insight.caseTitle, 50, 3) +
+    measureBlock(titleFont, insight.caseTitle, 50) +
     42 +
-    measureBlock(bodyFont, insight.story, 46, 5) +
+    measureBlock(bodyFont, insight.story, 46) +
     44 +
-    argumentItems.reduce((total, item) => total + measureBlock(bodyFont, item, 42, 2) + 18, 0) +
+    argumentItems.reduce((total, item) => total + measureBlock(bodyFont, item, 42, contentWidth - 52) + 18, 0) +
     44 +
-    measureBlock(strongFont, insight.takeaway, 46, 3) +
+    measureBlock(strongFont, insight.takeaway, 46, contentWidth - 56) +
     54 +
-    measureBlock(smallFont, "仅供学习研究，不构成投资建议。", 30, 1);
-  const height = Math.min(1800, Math.max(1180, margin * 2 + contentHeight));
+    measureBlock(smallFont, "仅供学习研究，不构成投资建议。", 30);
+  const height = Math.max(1180, margin * 2 + contentHeight);
   const canvas = document.createElement("canvas");
   canvas.width = width * scale;
   canvas.height = height * scale;
@@ -442,8 +452,7 @@ function drawShareCard({ book, point, insight }) {
   ctx.font = titleFont;
   y = drawWrappedText(ctx, insight.caseTitle, margin, y, contentWidth, 50, {
     font: titleFont,
-    color: "#17202a",
-    maxLines: 3
+    color: "#17202a"
   }).y;
   y += 24;
 
@@ -461,8 +470,7 @@ function drawShareCard({ book, point, insight }) {
   y += 34;
   y = drawWrappedText(ctx, insight.story, margin, y, contentWidth, 46, {
     font: bodyFont,
-    color: "#334155",
-    maxLines: 5
+    color: "#334155"
   }).y;
   y += 32;
 
@@ -480,15 +488,14 @@ function drawShareCard({ book, point, insight }) {
     ctx.fillText(String(index + 1), margin + 12, y + 20);
     const block = drawWrappedText(ctx, item, margin + 52, y, contentWidth - 52, 42, {
       font: bodyFont,
-      color: "#334155",
-      maxLines: 2
+      color: "#334155"
     });
     y = Math.max(y + 42, block.y) + 18;
   });
   y += 6;
 
   ctx.fillStyle = "#f4faf7";
-  const takeawayHeight = Math.max(130, measureBlock(strongFont, insight.takeaway, 46, 3) + 62);
+  const takeawayHeight = Math.max(130, measureBlock(strongFont, insight.takeaway, 46, contentWidth - 56) + 62);
   roundedRect(ctx, margin, y, contentWidth, takeawayHeight, 18);
   ctx.fill();
   ctx.strokeStyle = "#bdd2ca";
@@ -499,8 +506,7 @@ function drawShareCard({ book, point, insight }) {
   ctx.fillText("最终带走", margin + 28, y + 22);
   drawWrappedText(ctx, insight.takeaway, margin + 28, y + 58, contentWidth - 56, 46, {
     font: strongFont,
-    color: "#174f42",
-    maxLines: 3
+    color: "#174f42"
   });
   y += takeawayHeight + 34;
 
