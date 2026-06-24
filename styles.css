@@ -1111,6 +1111,100 @@ dd {
   color: var(--green-dark);
 }
 
+.card-actions button[data-action="export"] {
+  border-color: #cbdcd6;
+  background: #f4faf7;
+  color: var(--green-dark);
+}
+
+.card-actions button:disabled {
+  opacity: 0.62;
+}
+
+.export-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.42);
+  padding: 24px;
+}
+
+.export-preview-dialog {
+  width: min(960px, 100%);
+  max-height: min(880px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.export-preview-dialog header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  padding: 18px 20px;
+}
+
+.export-preview-dialog h2 {
+  margin-bottom: 5px;
+  font-size: 22px;
+}
+
+.export-preview-dialog p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+.export-preview-canvas {
+  overflow: auto;
+  background: #f4f6f5;
+  padding: 18px;
+}
+
+.export-preview-canvas img {
+  display: block;
+  width: min(100%, 540px);
+  height: auto;
+  margin: 0 auto;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+}
+
+.export-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding: 14px 20px;
+}
+
+.export-preview-actions a,
+.export-preview-actions button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.export-preview-actions a {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+}
+
 .ask-panel textarea {
   width: 100%;
   min-height: 126px;
@@ -2194,6 +2288,29 @@ dd {
 
   .import-modal {
     padding: 0;
+  }
+
+  .export-preview-modal {
+    padding: 0;
+  }
+
+  .export-preview-dialog {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .export-preview-dialog header,
+  .export-preview-actions {
+    padding: 14px;
+  }
+
+  .export-preview-actions {
+    justify-content: stretch;
+  }
+
+  .export-preview-actions a,
+  .export-preview-actions button {
+    flex: 1;
   }
 
   .import-dialog {

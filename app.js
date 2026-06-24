@@ -318,6 +318,248 @@ function insightForPoint(point, section) {
   };
 }
 
+function sanitizeFileName(value) {
+  return String(value || "zhitou-card")
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+}
+
+function canvasLines(ctx, text, maxWidth, maxLines = Infinity) {
+  const source = String(text || "").replace(/\s+/g, " ").trim();
+  const lines = [];
+  let line = "";
+  for (const char of Array.from(source)) {
+    const testLine = line + char;
+    if (ctx.measureText(testLine).width <= maxWidth || !line) {
+      line = testLine;
+      continue;
+    }
+    lines.push(line);
+    line = char;
+    if (lines.length >= maxLines) break;
+  }
+  if (line && lines.length < maxLines) lines.push(line);
+  if (Number.isFinite(maxLines) && lines.length === maxLines && line) {
+    const lastIndex = lines.length - 1;
+    let clipped = lines[lastIndex];
+    while (clipped.length > 1 && ctx.measureText(`${clipped}…`).width > maxWidth) clipped = clipped.slice(0, -1);
+    lines[lastIndex] = `${clipped}…`;
+  }
+  return lines;
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, options = {}) {
+  ctx.save();
+  ctx.font = options.font || "28px sans-serif";
+  ctx.fillStyle = options.color || "#17202a";
+  ctx.textBaseline = "top";
+  const lines = canvasLines(ctx, text, maxWidth, options.maxLines);
+  for (const line of lines) {
+    ctx.fillText(line, x, y);
+    y += lineHeight;
+  }
+  ctx.restore();
+  return { y, lines };
+}
+
+function roundedRect(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+}
+
+function drawShareCard({ book, point, insight }) {
+  const width = 1080;
+  const margin = 64;
+  const contentWidth = width - margin * 2;
+  const scale = 2;
+  const measureCanvas = document.createElement("canvas");
+  const measureCtx = measureCanvas.getContext("2d");
+  const fontFamily = 'Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif';
+
+  const measureBlock = (font, text, lineHeight, maxLines) => {
+    measureCtx.font = font;
+    return canvasLines(measureCtx, text, contentWidth, maxLines).length * lineHeight;
+  };
+
+  const titleFont = `700 42px ${fontFamily}`;
+  const metaFont = `600 24px ${fontFamily}`;
+  const labelFont = `800 21px ${fontFamily}`;
+  const bodyFont = `400 29px ${fontFamily}`;
+  const strongFont = `700 30px ${fontFamily}`;
+  const smallFont = `400 22px ${fontFamily}`;
+
+  const argumentItems = (insight.argument || []).slice(0, 3);
+  const contentHeight =
+    76 +
+    measureBlock(titleFont, insight.caseTitle, 50, 3) +
+    42 +
+    measureBlock(bodyFont, insight.story, 46, 5) +
+    44 +
+    argumentItems.reduce((total, item) => total + measureBlock(bodyFont, item, 42, 2) + 18, 0) +
+    44 +
+    measureBlock(strongFont, insight.takeaway, 46, 3) +
+    54 +
+    measureBlock(smallFont, "仅供学习研究，不构成投资建议。", 30, 1);
+  const height = Math.min(1800, Math.max(1180, margin * 2 + contentHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = "#f4f6f5";
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "#ffffff";
+  roundedRect(ctx, 32, 32, width - 64, height - 64, 26);
+  ctx.fill();
+  ctx.strokeStyle = "#d9dee7";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  let y = margin;
+  ctx.fillStyle = "#1f6f5b";
+  roundedRect(ctx, margin, y, 168, 42, 21);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `800 21px ${fontFamily}`;
+  ctx.textBaseline = "middle";
+  ctx.fillText("知投知识卡", margin + 22, y + 22);
+
+  ctx.fillStyle = "#667085";
+  ctx.font = metaFont;
+  ctx.textBaseline = "middle";
+  ctx.fillText(`${book.title}｜${point.title}`, margin + 190, y + 22);
+  y += 70;
+
+  ctx.fillStyle = "#17202a";
+  ctx.font = titleFont;
+  y = drawWrappedText(ctx, insight.caseTitle, margin, y, contentWidth, 50, {
+    font: titleFont,
+    color: "#17202a",
+    maxLines: 3
+  }).y;
+  y += 24;
+
+  ctx.strokeStyle = "#d9dee7";
+  ctx.beginPath();
+  ctx.moveTo(margin, y);
+  ctx.lineTo(width - margin, y);
+  ctx.stroke();
+  y += 34;
+
+  ctx.fillStyle = "#315f91";
+  ctx.font = labelFont;
+  ctx.textBaseline = "top";
+  ctx.fillText(insight.storyLabel || "故事切入", margin, y);
+  y += 34;
+  y = drawWrappedText(ctx, insight.story, margin, y, contentWidth, 46, {
+    font: bodyFont,
+    color: "#334155",
+    maxLines: 5
+  }).y;
+  y += 32;
+
+  ctx.fillStyle = "#174f42";
+  ctx.font = labelFont;
+  ctx.fillText("这本书是怎么说服你的", margin, y);
+  y += 40;
+  argumentItems.forEach((item, index) => {
+    ctx.fillStyle = "#eef6f3";
+    roundedRect(ctx, margin, y + 2, 34, 34, 17);
+    ctx.fill();
+    ctx.fillStyle = "#1f6f5b";
+    ctx.font = `800 20px ${fontFamily}`;
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(index + 1), margin + 12, y + 20);
+    const block = drawWrappedText(ctx, item, margin + 52, y, contentWidth - 52, 42, {
+      font: bodyFont,
+      color: "#334155",
+      maxLines: 2
+    });
+    y = Math.max(y + 42, block.y) + 18;
+  });
+  y += 6;
+
+  ctx.fillStyle = "#f4faf7";
+  const takeawayHeight = Math.max(130, measureBlock(strongFont, insight.takeaway, 46, 3) + 62);
+  roundedRect(ctx, margin, y, contentWidth, takeawayHeight, 18);
+  ctx.fill();
+  ctx.strokeStyle = "#bdd2ca";
+  ctx.stroke();
+  ctx.fillStyle = "#174f42";
+  ctx.font = labelFont;
+  ctx.textBaseline = "top";
+  ctx.fillText("最终带走", margin + 28, y + 22);
+  drawWrappedText(ctx, insight.takeaway, margin + 28, y + 58, contentWidth - 56, 46, {
+    font: strongFont,
+    color: "#174f42",
+    maxLines: 3
+  });
+  y += takeawayHeight + 34;
+
+  ctx.fillStyle = "#667085";
+  ctx.font = smallFont;
+  ctx.fillText("仅供学习研究，不构成投资建议。", margin, height - margin - 34);
+  ctx.fillStyle = "#1f6f5b";
+  ctx.font = `800 22px ${fontFamily}`;
+  ctx.textAlign = "right";
+  ctx.fillText("Read to Invest · 知投", width - margin, height - margin - 34);
+  ctx.textAlign = "left";
+
+  return canvas;
+}
+
+function showExportPreview(dataUrl, filename) {
+  const safeName = sanitizeFileName(filename);
+  const existing = document.querySelector(".export-preview-modal");
+  if (existing) existing.remove();
+  const modal = document.createElement("section");
+  modal.className = "export-preview-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-label", "知识卡片图片预览");
+  modal.innerHTML = `
+    <div class="export-preview-dialog">
+      <header>
+        <div>
+          <p class="eyebrow">CARD EXPORT</p>
+          <h2>知识卡片已生成</h2>
+          <p>可以直接下载 PNG，或在图片上右键/长按保存。</p>
+        </div>
+        <button class="icon-button" data-export-close type="button" aria-label="关闭图片预览" title="关闭">×</button>
+      </header>
+      <div class="export-preview-canvas">
+        <img src="${dataUrl}" alt="导出的知识卡片图片预览" />
+      </div>
+      <div class="export-preview-actions">
+        <a href="${dataUrl}" download="${safeName}.png">下载 PNG</a>
+        <button data-export-close type="button">关闭</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.querySelectorAll("[data-export-close]").forEach((button) => {
+    button.addEventListener("click", () => modal.remove());
+  });
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) modal.remove();
+  });
+}
+
+function exportKnowledgeCard(point, section) {
+  const book = bookById(point.bookId) || bookById(state.selectedBookId);
+  const insight = insightForPoint(point, section);
+  const canvas = drawShareCard({ book, point, insight });
+  showExportPreview(canvas.toDataURL("image/png"), `${book?.title || "知投"}-${point.title}-知识卡`);
+}
+
 function pointById(id) {
   return state.knowledgePoints.find((point) => point.id === id);
 }
@@ -836,6 +1078,7 @@ function renderPoints() {
       <div class="tag-row">${selectedPoint.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
       <div class="card-actions">
         <button class="${isMastered ? "active" : ""}" data-action="mastered" type="button">${isMastered ? "已掌握，取消标记" : "标记为已掌握"}</button>
+        <button data-action="export" type="button">导出图片</button>
         <button data-action="next" type="button">下一张</button>
         <button data-action="random" type="button">随机知识点</button>
         <button data-action="ask" type="button">让 AI 解释这张</button>
@@ -862,6 +1105,25 @@ function renderPoints() {
     button.addEventListener("click", () => showTerm(button.dataset.term));
   });
   els.pointDetail.querySelector('[data-action="mastered"]')?.addEventListener("click", () => toggleMastered(selectedPoint.id));
+  els.pointDetail.querySelector('[data-action="export"]')?.addEventListener("click", (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = "正在生成图片";
+    try {
+      exportKnowledgeCard(selectedPoint, selectedSection);
+      button.textContent = "图片已下载";
+      setTimeout(() => {
+        button.disabled = false;
+        button.textContent = "导出图片";
+      }, 1400);
+    } catch {
+      button.disabled = false;
+      button.textContent = "导出失败，请重试";
+      setTimeout(() => {
+        button.textContent = "导出图片";
+      }, 1800);
+    }
+  });
   els.pointDetail.querySelector('[data-action="next"]')?.addEventListener("click", () => movePoint(1));
   els.pointDetail.querySelector('[data-action="random"]')?.addEventListener("click", selectRandomPoint);
   els.pointDetail.querySelector('[data-action="ask"]')?.addEventListener("click", () => askAboutPoint(selectedPoint));
